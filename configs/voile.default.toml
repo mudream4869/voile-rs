@@ -1,0 +1,9 @@
+ip='127.0.0.1'
+port=8080
+data_dir=''
+
+# frontend_dir structure:
+# |- index.html
+# |- favicon.ico
+# |- assets/
+frontend_dir=''
