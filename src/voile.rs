@@ -31,6 +31,7 @@ struct BookDetails {
     pub title: Option<String>,
     pub author: Option<String>,
     pub tags: Option<Vec<String>>,
+    pub book_cover: Option<String>,
 }
 
 impl BookDetails {
@@ -41,13 +42,14 @@ impl BookDetails {
     }
 }
 
-#[derive(Clone)]
+#[derive(Serialize, Clone)]
 pub struct Book {
     pub book_id: String,
     pub title: String,
     pub author: Option<String>,
     pub tags: Option<Vec<String>>,
     pub content_titles: Vec<String>,
+    pub book_cover: Option<String>,
 }
 
 pub struct Voile {
@@ -55,6 +57,17 @@ pub struct Voile {
 
     book_cache: std::collections::HashMap<String, Book>,
     db_conn: std::sync::Mutex<sqlite::Connection>,
+}
+
+fn is_image(filename: &String) -> bool {
+    // TODO
+    let img_suffixes: Vec<&str> = vec![".png", ".jpg"];
+    for suffix in img_suffixes {
+        if filename.ends_with(suffix) {
+            return true;
+        }
+    }
+    false
 }
 
 impl Voile {
@@ -118,7 +131,7 @@ impl Voile {
         Ok(())
     }
 
-    pub fn get_books(&self) -> Result<Vec<String>> {
+    pub fn get_books(&mut self) -> Result<Vec<Book>> {
         let mut ret = vec![];
         for path in std::fs::read_dir(self.books_dir.as_str())? {
             let entry = path?;
@@ -134,12 +147,15 @@ impl Voile {
                 continue;
             }
 
-            ret.push(title);
+            match self.get_book(title) {
+                Ok(book) => ret.push(book),
+                Err(_) => {}
+            }
         }
         Ok(ret)
     }
 
-    pub fn get_book(&self, book_id: String) -> Result<Book> {
+    pub fn get_book(&mut self, book_id: String) -> Result<Book> {
         if let Some(book) = self.book_cache.get(&book_id) {
             return Ok(book.clone());
         }
@@ -173,9 +189,10 @@ impl Voile {
         let mut book = Book {
             book_id: book_id.clone(),
             title: book_id.clone(),
+            content_titles: contents,
             author: None,
             tags: None,
-            content_titles: contents,
+            book_cover: None,
         };
 
         // details.json is optional
@@ -190,13 +207,24 @@ impl Voile {
             }
             book.author = book_detail.author;
             book.tags = book_detail.tags;
+            book.book_cover = book_detail.book_cover;
         }
 
+        if book.book_cover.is_none() {
+            // Use first content as book_cover if it's an image file
+            if let Some(filename) = book.content_titles.get(0) {
+                if is_image(filename) {
+                    book.book_cover = Some(filename.clone());
+                }
+            }
+        }
+
+        self.book_cache.insert(book_id.clone(), book.clone());
         Ok(book)
     }
 
     pub fn get_book_content(
-        &self,
+        &mut self,
         book_id: String,
         content_idx: usize,
     ) -> Result<std::path::PathBuf> {

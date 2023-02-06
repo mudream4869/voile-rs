@@ -7,7 +7,7 @@
         {{ line }}<br/>
       </span>
     </div>
-    <div v-if="!is_text">
+    <div v-if="!is_text" class="mx-auto">
       <img :src="content_src_url" />
       <!-- prefetch next image -->
       <img :src="next_content_src_url" hidden/>
@@ -23,7 +23,7 @@
       return {
         book: {
           title: '',
-          contents: [],
+          content_titles: [],
           tags: null,
           author: null,
         },
@@ -35,11 +35,11 @@
     },
     computed: {
       content_title() {
-        return this.book.contents[this.content_idx]
+        return this.book.content_titles[this.content_idx]
       },
       is_text() {
-        if (this.book.contents.length > this.content_idx) {
-          return this.book.contents && this.book.contents[this.content_idx].endsWith('.txt')
+        if (this.book.content_titles.length > this.content_idx) {
+          return this.book.content_titles && this.book.content_titles[this.content_idx].endsWith('.txt')
         }
         return false
       },
@@ -102,7 +102,7 @@
         }
       },
       next_content() {
-        if (this.content_idx + 1 < this.book.contents.length) {
+        if (this.content_idx + 1 < this.book.content_titles.length) {
           this.content_idx += 1
           this.UpdateContentIDX()
         }

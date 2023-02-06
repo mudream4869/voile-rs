@@ -2,10 +2,11 @@ extern crate voile;
 
 use actix_web::{get, post, web, Responder};
 use serde::{Deserialize, Serialize};
+use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 struct AppState {
-    voile: std::sync::Arc<voile::Voile>,
+    voile: Arc<Mutex<voile::Voile>>,
     frontend_dir: String,
 }
 
@@ -23,20 +24,12 @@ async fn favicon(data: web::Data<AppState>) -> std::io::Result<actix_files::Name
 
 #[derive(Serialize)]
 struct RespBooks {
-    books: Vec<String>,
-}
-
-#[derive(Serialize)]
-struct RespBook {
-    title: String,
-    contents: Vec<String>,
-    author: Option<String>,
-    tags: Option<Vec<String>>,
+    books: Vec<voile::Book>,
 }
 
 #[get("/api/books")]
 async fn get_books(data: web::Data<AppState>) -> actix_web::Result<impl Responder> {
-    let books = data.voile.get_books()?;
+    let books = data.voile.lock().unwrap().get_books()?;
     Ok(web::Json(RespBooks { books: books }))
 }
 
@@ -47,14 +40,9 @@ async fn get_book(
 ) -> actix_web::Result<impl Responder> {
     let book_id = path.into_inner();
 
-    let book = data.voile.get_book(book_id)?;
+    let book = data.voile.lock().unwrap().get_book(book_id)?;
 
-    Ok(web::Json(RespBook {
-        title: book.book_id,
-        contents: book.content_titles,
-        tags: book.tags,
-        author: book.author,
-    }))
+    Ok(web::Json(book))
 }
 
 #[get("/api/books/{book_id}/contents/{content_id}")]
@@ -64,7 +52,11 @@ async fn get_book_content(
 ) -> actix_web::Result<impl Responder> {
     let (book_id, content_idx) = path.into_inner();
 
-    let content_path = data.voile.get_book_content(book_id, content_idx)?;
+    let content_path = data
+        .voile
+        .lock()
+        .unwrap()
+        .get_book_content(book_id, content_idx)?;
     Ok(actix_files::NamedFile::open(content_path)?)
 }
 
@@ -75,7 +67,7 @@ async fn get_book_proc(
 ) -> actix_web::Result<impl Responder> {
     let book_id = path.into_inner();
 
-    let content_idx = data.voile.get_book_proc(book_id)?;
+    let content_idx = data.voile.lock().unwrap().get_book_proc(book_id)?;
 
     Ok(content_idx.to_string())
 }
@@ -94,7 +86,10 @@ async fn set_book_proc(
         .parse::<usize>()
         .unwrap();
 
-    data.voile.set_book_proc(book_id, content_idx)?;
+    data.voile
+        .lock()
+        .unwrap()
+        .set_book_proc(book_id, content_idx)?;
 
     Ok(content_idx.to_string())
 }
@@ -146,7 +141,9 @@ fn main() -> std::io::Result<()> {
 #[actix_web::main]
 async fn app(conf: Config) -> std::io::Result<()> {
     let data = AppState {
-        voile: std::sync::Arc::new(voile::Voile::new(conf.data_dir.clone()).unwrap()),
+        voile: Arc::new(Mutex::new(
+            voile::Voile::new(conf.data_dir.clone()).unwrap(),
+        )),
         frontend_dir: conf.frontend_dir.clone(),
     };
 

@@ -14,7 +14,7 @@
 
           <v-btn variant="outlined" v-if="last_content_idx >= 0"
                  :to="{ name: 'content', params: {book_id, content_idx: last_content_idx}}">
-            繼續閱讀: {{ book.contents[last_content_idx] }}
+            繼續閱讀: {{ book.content_titles[last_content_idx] }}
           </v-btn>
 
           <v-btn variant="outlined" v-if="last_content_idx == -1"
@@ -24,7 +24,7 @@
         </v-col>
       </v-row>
       <v-row>
-        <v-col cols="4" v-for="(c, idx) in book.contents" :key="idx">
+        <v-col cols="4" v-for="(c, idx) in book.content_titles" :key="idx">
           <v-btn variant="text" :to="{ name: 'content', params: {book_id, content_idx: idx}}">
             {{ c }}
           </v-btn>
@@ -42,7 +42,7 @@
       return {
         book: {
           title: '',
-          contents: [],
+          content_titles: [],
           tags: null,
           author: null,
         },

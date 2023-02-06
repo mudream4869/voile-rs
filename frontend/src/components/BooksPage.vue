@@ -1,12 +1,12 @@
 <template>
   <v-app>
-    <v-card elevation="2" v-for="book in books" :key="book" outlined shaped class="ma-md-2">
+    <v-card elevation="2" v-for="book in books" :key="book.book_id" outlined shaped class="ma-md-2">
       <v-card-title>
-        {{ book }}
+        {{ book.title }}
       </v-card-title>
 
       <v-card-actions>
-        <v-btn outlined :to="{ name: 'book', params: { book_id: book }}">
+        <v-btn outlined :to="{ name: 'book', params: { book_id: book.book_id }}">
           閱讀
         </v-btn>
       </v-card-actions>
