@@ -26,19 +26,41 @@ impl std::fmt::Display for IndexOutOfRange {
 
 impl std::error::Error for IndexOutOfRange {}
 
-#[derive(Serialize, Deserialize)]
-struct BookDetails {
+#[derive(Serialize, Deserialize, Clone)]
+pub struct BookDetails {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub author: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub tags: Option<Vec<String>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub book_cover: Option<String>,
 }
 
 impl BookDetails {
+    pub fn new() -> BookDetails {
+        BookDetails {
+            title: None,
+            author: None,
+            tags: None,
+            book_cover: None,
+        }
+    }
+
     pub fn from_filename<P: AsRef<std::path::Path>>(filename: P) -> std::io::Result<BookDetails> {
         let detail_str = std::fs::read_to_string(filename)?;
         let detail: BookDetails = serde_json::from_str(detail_str.as_str())?;
         Ok(detail)
+    }
+
+    pub fn write_to_filename<P: AsRef<std::path::Path>>(&self, filename: P) -> std::io::Result<()> {
+        let detail_str = serde_json::to_string_pretty(&self)?;
+        std::fs::write(filename, detail_str)?;
+        Ok(())
     }
 }
 
@@ -50,6 +72,26 @@ pub struct Book {
     pub tags: Option<Vec<String>>,
     pub content_titles: Vec<String>,
     pub book_cover: Option<String>,
+}
+
+impl Book {
+    pub fn apply_book_detail(&mut self, book_detail: BookDetails) {
+        if let Some(title) = book_detail.title {
+            self.title = title;
+        }
+
+        if let Some(author) = book_detail.author {
+            self.author = Some(author);
+        }
+
+        if let Some(tags) = book_detail.tags {
+            self.tags = Some(tags);
+        }
+
+        if let Some(book_cover) = book_detail.book_cover {
+            self.book_cover = Some(book_cover)
+        }
+    }
 }
 
 pub struct Voile {
@@ -202,12 +244,7 @@ impl Voile {
                 .collect();
 
         if let Ok(book_detail) = BookDetails::from_filename(detail_filename) {
-            if let Some(title) = book_detail.title {
-                book.title = title;
-            }
-            book.author = book_detail.author;
-            book.tags = book_detail.tags;
-            book.book_cover = book_detail.book_cover;
+            book.apply_book_detail(book_detail);
         }
 
         if book.book_cover.is_none() {
@@ -244,5 +281,20 @@ impl Voile {
         .collect();
 
         Ok(full_dir)
+    }
+
+    pub fn set_book_detail(&mut self, book_id: String, book_detail: BookDetails) -> Result<()> {
+        self.get_book(book_id.clone())?;
+
+        let cur_book = self.book_cache.get_mut(&book_id).unwrap();
+        cur_book.apply_book_detail(book_detail.clone());
+
+        let detail_filename: std::path::PathBuf =
+            [self.books_dir.as_str(), book_id.as_str(), "details.json"]
+                .iter()
+                .collect();
+
+        book_detail.write_to_filename(detail_filename)?;
+        Ok(())
     }
 }

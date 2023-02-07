@@ -45,6 +45,22 @@ async fn get_book(
     Ok(web::Json(book))
 }
 
+#[post("/api/books/{book_id}")]
+async fn set_book_detail(
+    path: web::Path<String>,
+    data: web::Data<AppState>,
+    book_detail: web::Json<voile::BookDetails>,
+) -> actix_web::Result<impl Responder> {
+    let book_id = path.into_inner();
+
+    data.voile
+        .lock()
+        .unwrap()
+        .set_book_detail(book_id, book_detail.0)?;
+
+    Ok("")
+}
+
 #[get("/api/books/{book_id}/contents/{content_id}")]
 async fn get_book_content(
     path: web::Path<(String, usize)>,
@@ -158,6 +174,7 @@ async fn app(conf: Config) -> std::io::Result<()> {
             .wrap(actix_web::middleware::Logger::default())
             .service(get_books)
             .service(get_book)
+            .service(set_book_detail)
             .service(get_book_content)
             .service(get_book_proc)
             .service(set_book_proc)

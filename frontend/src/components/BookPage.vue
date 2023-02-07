@@ -1,9 +1,28 @@
 <template>
   <v-app>
     <v-container class="ma-md-2">
+      <v-dialog v-model="edit_dialog">
+        <v-card>
+          <v-card-title>
+            <span class="text-h5"> 編輯 {{ book.title }} </span>
+          </v-card-title>
+          <v-card-text>
+             <v-text-field label="標題" required v-model="book.title"></v-text-field>
+             <v-text-field label="作者" v-model="book.author"></v-text-field>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" @click="edit_dialog = false; updateBookDetail();">確認修改</v-btn>
+            <v-btn color="warning" @click="edit_dialog = false">取消</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
       <v-row>
         <v-col cols="12">
-          <h1> {{ book.title }} </h1>
+          <h1>
+            {{ book.title }}
+            <v-btn variant="tonal" size="small" @click="edit_dialog = true"><v-icon>mdi-pencil</v-icon> 編輯</v-btn>
+          </h1> 
 
           <div v-if="book.tags">
             <v-chip class="ma-2" label
@@ -49,6 +68,8 @@
 
         book_id: '',
         last_content_idx: -1,
+
+        edit_dialog: false,
       }
     },
     created() {
@@ -65,6 +86,20 @@
           if (res.status == 200) {
             this.last_content_idx = parseInt(await res.text())
           }
+        })
+      },
+      async updateBookDetail() {
+        await fetch(`/api/books/${this.book_id}`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: this.book.title,
+            author: this.book.author,
+            tags: this.book.tags,
+          }),
         })
       },
     },
