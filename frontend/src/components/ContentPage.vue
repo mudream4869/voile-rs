@@ -83,7 +83,6 @@
         if (this.is_text) {
           this.content = (await (await fetch(this.content_src_url)).text())
         }
-        window.scrollTo(0, 0);
 
         this.$router.push({
           name: 'content',

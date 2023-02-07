@@ -8,7 +8,7 @@
               v-if="book.book_cover"
               class="align-end text-white"
               height="200"
-              :src="content_book_cover(book.book_id)"
+              :src="`/api/books/${book.book_id}/book_cover`"
               cover>
               <v-card-title>
                 {{ book.title }}
@@ -46,10 +46,6 @@
     methods: {
       async fetchData() {
         this.books = (await (await fetch('/api/books')).json()).books
-      },
-
-      content_book_cover(book_id) {
-        return `/api/books/${book_id}/contents/0`
       },
     },
   }

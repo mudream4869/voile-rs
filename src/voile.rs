@@ -26,6 +26,17 @@ impl std::fmt::Display for IndexOutOfRange {
 
 impl std::error::Error for IndexOutOfRange {}
 
+#[derive(Debug)]
+struct NotExist(String);
+
+impl std::fmt::Display for NotExist {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "data not exist: {}", self.0)
+    }
+}
+
+impl std::error::Error for NotExist {}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct BookDetails {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -260,7 +271,7 @@ impl Voile {
         Ok(book)
     }
 
-    pub fn get_book_content(
+    pub fn get_book_content_path(
         &mut self,
         book_id: String,
         content_idx: usize,
@@ -276,6 +287,26 @@ impl Voile {
             self.books_dir.as_str(),
             book_id.as_str(),
             content_id.as_str(),
+        ]
+        .iter()
+        .collect();
+
+        Ok(full_dir)
+    }
+
+    pub fn get_book_cover_path(&mut self, book_id: String) -> Result<std::path::PathBuf> {
+        // TODO: dir safety check
+        let book = self.get_book(book_id.clone())?;
+        if book.book_cover.is_none() {
+            return Err(Box::new(NotExist(String::from_str("book_cover").unwrap())));
+        }
+
+        let book_cover = book.book_cover.unwrap();
+
+        let full_dir: std::path::PathBuf = [
+            self.books_dir.as_str(),
+            book_id.as_str(),
+            book_cover.as_str(),
         ]
         .iter()
         .collect();

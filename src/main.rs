@@ -45,6 +45,18 @@ async fn get_book(
     Ok(web::Json(book))
 }
 
+#[get("/api/books/{book_id}/book_cover")]
+async fn get_book_cover(
+    path: web::Path<String>,
+    data: web::Data<AppState>,
+) -> actix_web::Result<impl Responder> {
+    let book_id = path.into_inner();
+
+    let book_cover_path = data.voile.lock().unwrap().get_book_cover_path(book_id)?;
+
+    Ok(actix_files::NamedFile::open(book_cover_path)?)
+}
+
 #[post("/api/books/{book_id}")]
 async fn set_book_detail(
     path: web::Path<String>,
@@ -72,7 +84,7 @@ async fn get_book_content(
         .voile
         .lock()
         .unwrap()
-        .get_book_content(book_id, content_idx)?;
+        .get_book_content_path(book_id, content_idx)?;
     Ok(actix_files::NamedFile::open(content_path)?)
 }
 
@@ -174,6 +186,7 @@ async fn app(conf: Config) -> std::io::Result<()> {
             .wrap(actix_web::middleware::Logger::default())
             .service(get_books)
             .service(get_book)
+            .service(get_book_cover)
             .service(set_book_detail)
             .service(get_book_content)
             .service(get_book_proc)

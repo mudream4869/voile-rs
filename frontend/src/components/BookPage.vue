@@ -18,7 +18,23 @@
         </v-card>
       </v-dialog>
       <v-row>
-        <v-col cols="12">
+        <v-col cols="3">
+          <v-img
+            v-if="book.book_cover"
+            class="align-end text-white"
+            :src="`/api/books/${book.book_id}/book_cover`"
+            height="200"
+            cover>
+          </v-img>
+          <v-img
+            v-else
+            class="align-end text-white"
+            src="https://via.placeholder.com/200"
+            height="200"
+            cover>
+          </v-img>
+        </v-col>
+        <v-col cols="9">
           <h1>
             {{ book.title }}
             <v-btn variant="tonal" size="small" @click="edit_dialog = true"><v-icon>mdi-pencil</v-icon> 編輯</v-btn>
