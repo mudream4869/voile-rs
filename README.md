@@ -21,7 +21,5 @@ target/debug/app
 
 ## TODO
 
-* Edit info
-* Edit tags
 * Config
 * Personal Info

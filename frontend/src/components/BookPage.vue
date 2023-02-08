@@ -9,8 +9,30 @@
             <span class="text-h5"> 編輯 {{ book.title }} </span>
           </v-card-title>
           <v-card-text>
-             <v-text-field label="標題" required v-model="book.title"></v-text-field>
-             <v-text-field label="作者" v-model="book.author"></v-text-field>
+            <v-container fluid>
+              <v-row>
+                <v-col cols="12">
+                  <v-text-field label="標題" required v-model="book.title"></v-text-field>
+                  <v-text-field label="作者" v-model="book.author"></v-text-field>
+                </v-col>
+                <v-col cols="12">
+                  <v-chip-group>
+                    <v-chip v-for="(tag, i) in book.tags" :key="tag"
+                            @click="book.tags.splice(i, 1)"> {{ tag }} </v-chip>
+                    <v-text-field
+                      density="compact"
+                      variant="solo"
+                      append-inner-icon="mdi-plus"
+                      label="想要新增的標籤"
+                      single-line
+                      hide-details
+                      v-model="input_tag"
+                      @click:append-inner="addTag"
+                    ></v-text-field>
+                  </v-chip-group>
+                </v-col>
+              </v-row>
+            </v-container>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -88,6 +110,8 @@
         last_content_idx: -1,
 
         edit_dialog: false,
+
+        input_tag: '',
       }
     },
     created() {
@@ -138,6 +162,14 @@
           }),
         })
       },
+      addTag() {
+        if (this.book.tags) {
+          this.book.tags.push(this.input_tag);
+        } else {
+          this.book.tags = [this.input_tag];
+        }
+        this.input_tag = '';
+      }
     },
   }
 </script>
