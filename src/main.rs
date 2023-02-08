@@ -95,31 +95,30 @@ async fn get_book_proc(
 ) -> actix_web::Result<impl Responder> {
     let book_id = path.into_inner();
 
-    let content_idx = data.voile.lock().unwrap().get_book_proc(book_id)?;
+    let book_proc = data.voile.lock().unwrap().get_book_proc(book_id)?;
 
-    Ok(content_idx.to_string())
+    println!("{:?}", book_proc);
+
+    Ok(web::Json(book_proc))
 }
 
 #[post("/api/user/book_proc/{book_id}")]
 async fn set_book_proc(
     path: web::Path<String>,
     data: web::Data<AppState>,
-    body: web::Bytes,
+    book_proc: web::Json<voile::BookProc>,
 ) -> actix_web::Result<impl Responder> {
     // TODO: error handling
     let book_id = path.into_inner();
 
-    let content_idx = std::str::from_utf8(&body)
-        .unwrap()
-        .parse::<usize>()
-        .unwrap();
+    println!("{:?}", book_proc.0);
 
     data.voile
         .lock()
         .unwrap()
-        .set_book_proc(book_id, content_idx)?;
+        .set_book_proc(book_id, &book_proc.0)?;
 
-    Ok(content_idx.to_string())
+    Ok(book_proc)
 }
 
 #[derive(Deserialize)]

@@ -4,10 +4,21 @@
     </v-breadcrumbs>
     <div v-if="is_text" class="ma-md-2" style="font-size: 40px;">
       <h1> {{ content_title }} </h1>
+      <div v-if="paging_max > 1">
+        <v-pagination @update:modelValue="updatePaging"
+          v-model="paging" :length="paging_max" :start="0">
+        </v-pagination>
+      </div>
 
-      <span v-for="idx in current_page_lines" :key="idx" >
+      <span v-if="current_page_lines > 0" v-for="idx in current_page_lines" :key="idx" >
         {{ content_lines[idx - 1 + paging*paging_line] }}<br/>
       </span>
+
+      <div v-if="paging_max > 1">
+        <v-pagination @update:modelValue="updatePaging"
+          v-model="paging" :length="paging_max" :start="0">
+        </v-pagination>
+      </div>
     </div>
     <div v-if="!is_text" class="mx-auto">
       <img :src="content_src_url" />
@@ -110,7 +121,14 @@
       async setBookProc() {
         await fetch(`/api/user/book_proc/${this.book_id}`, {
           method: 'POST',
-          body: `${this.content_idx}`,
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content_idx: this.content_idx,
+            paging: this.paging,
+          }),
         })
       },
       async fetchBook() {
@@ -121,7 +139,10 @@
           this.paging_max = Math.ceil(this.content_lines.length / this.paging_line)
         }
       },
-      updatePaging() {
+      updatePaging(nextPaging) {
+        if (nextPaging) {
+          this.paging = nextPaging
+        }
         this.$router.push({
           name: 'content',
           params: {
@@ -130,6 +151,7 @@
             paging: this.paging,
           }
         })
+        this.setBookProc()
       },
       async UpdateContentIDX() {
         if (this.is_text) {

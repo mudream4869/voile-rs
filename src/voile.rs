@@ -105,6 +105,21 @@ impl Book {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BookProc {
+    pub content_idx: usize,
+    pub paging: usize,
+}
+
+impl BookProc {
+    pub fn new() -> BookProc {
+        BookProc {
+            content_idx: 0,
+            paging: 0,
+        }
+    }
+}
+
 pub struct Voile {
     books_dir: String,
 
@@ -142,41 +157,48 @@ impl Voile {
         db_conn.execute(
             "CREATE TABLE IF NOT EXISTS book_read_proc (
                  book_id TEXT NOT NULL UNIQUE,
-                 content_idx INTEGER NOT NULL
+                 content_idx INTEGER NOT NULL,
+                 paging INTEGER NOT NULL
              )",
         )?;
 
         Ok(())
     }
 
-    pub fn get_book_proc(&self, book_id: String) -> Result<usize> {
+    pub fn get_book_proc(&self, book_id: String) -> Result<BookProc> {
         let db_conn = self.db_conn.lock().unwrap();
-        let query = "SELECT content_idx FROM book_read_proc WHERE book_id = :book_id";
+        let query = "SELECT content_idx, paging FROM book_read_proc WHERE book_id = :book_id";
         let mut statement = db_conn.prepare(query)?;
         statement.bind::<&[(_, sqlite::Value)]>(&[(":book_id", book_id.clone().into())][..])?;
 
         let s = statement.next()?;
+        println!("1");
 
         if s == sqlite::State::Row {
-            return Ok(statement.read::<i64, _>("content_idx").unwrap() as usize);
+            println!("1");
+            return Ok(BookProc {
+                content_idx: statement.read::<i64, _>("content_idx").unwrap() as usize,
+                paging: statement.read::<i64, _>("paging").unwrap() as usize,
+            });
         }
 
         Err(Box::new(BookIDNotFoundError(book_id)))
     }
 
-    pub fn set_book_proc(&self, book_id: String, content_idx: usize) -> Result<()> {
+    pub fn set_book_proc(&self, book_id: String, book_proc: &BookProc) -> Result<()> {
         let db_conn = self.db_conn.lock().unwrap();
         let query = r#"
-            INSERT INTO book_read_proc (book_id, content_idx)
-                VALUES (:book_id, :content_idx)
+            INSERT INTO book_read_proc (book_id, content_idx, paging)
+                VALUES (:book_id, :content_idx, :paging)
                 ON CONFLICT (book_id) DO
-                UPDATE SET content_idx = excluded.content_idx;
+                UPDATE SET content_idx = excluded.content_idx, paging = excluded.paging;
         "#;
         let mut statement = db_conn.prepare(query)?;
 
         statement.bind::<&[(_, sqlite::Value)]>(&[
             (":book_id", book_id.into()),
-            (":content_idx", (content_idx as i64).into()),
+            (":content_idx", (book_proc.content_idx as i64).into()),
+            (":paging", (book_proc.paging as i64).into()),
         ])?;
 
         statement.next()?;

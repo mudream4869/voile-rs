@@ -71,12 +71,12 @@
 
           <p v-if="book.author"> 作者: {{ book.author }} </p>
 
-          <v-btn variant="outlined" v-if="last_content_idx >= 0"
-                 :to="{ name: 'content', params: {book_id, content_idx: last_content_idx, paging: 0}}">
-            繼續閱讀: {{ book.content_titles[last_content_idx] }}
+          <v-btn variant="outlined" v-if="book_proc.content_idx >= 0"
+                 :to="{ name: 'content', params: {book_id, content_idx: book_proc.content_idx, paging: book_proc.paging}}">
+            繼續閱讀: {{ book.content_titles[book_proc.content_idx] }}
           </v-btn>
 
-          <v-btn variant="outlined" v-if="last_content_idx == -1"
+          <v-btn variant="outlined" v-if="book_proc.content_idx == -1"
                  :to="{ name: 'content', params: {book_id, content_idx: 0, paging: 0}}">
             開始閱讀
           </v-btn>
@@ -107,7 +107,10 @@
         },
 
         book_id: '',
-        last_content_idx: -1,
+        book_proc: {
+          content_idx: -1,
+          paging: 0,
+        },
 
         edit_dialog: false,
 
@@ -144,7 +147,7 @@
         this.book = (await (await fetch(`/api/books/${this.book_id}`)).json())
         fetch(`/api/user/book_proc/${this.book_id}`).then(async res => {
           if (res.status == 200) {
-            this.last_content_idx = parseInt(await res.text())
+            this.book_proc = await res.json()
           }
         })
       },
