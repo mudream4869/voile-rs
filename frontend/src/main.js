@@ -23,7 +23,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 
 const routes = [
   { path: '/', component: HomePage },
-  { path: '/books', component: BooksPage },
+  { name: 'books', path: '/books', component: BooksPage },
   { name: 'book', path: '/books/:book_id', component: BookPage },
   { name: 'content', path: '/books/:book_id/contents/:content_idx', component: ContentPage },
   { path: '/config', component: ConfigPage },

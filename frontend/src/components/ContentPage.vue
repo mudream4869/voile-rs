@@ -1,5 +1,7 @@
 <template>
   <v-app tabindex="0" @keyup.arrow-left="previous_content" @keyup.arrow-right="next_content">
+    <v-breadcrumbs divider="-" :items="breadcrumbsItems">
+    </v-breadcrumbs>
     <div v-if="is_text" class="ma-md-2" >
       <h1> {{ content_title }} </h1>
 
@@ -48,6 +50,33 @@
       },
       next_content_src_url() {
         return `/api/books/${this.book_id}/contents/${this.content_idx + 1}`
+      },
+      breadcrumbsItems() {
+        return [
+          {
+            title: '書櫃',
+            link: true,
+            disabled: false,
+            to: {
+              name: 'books',
+            },
+          },
+          {
+            title: this.book.title,
+            link: true,
+            disabled: false,
+            to: {
+              name: 'book',
+              params: {
+                book_id: this.book_id,
+              },
+            },
+          },
+          {
+            title: this.content_title,
+            disabled: false,
+          },
+        ]
       },
     },
     created() {

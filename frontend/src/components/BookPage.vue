@@ -1,5 +1,7 @@
 <template>
   <v-app>
+    <v-breadcrumbs divider="-" :items="breadcrumbsItems">
+    </v-breadcrumbs>
     <v-container class="ma-md-2">
       <v-dialog v-model="edit_dialog">
         <v-card>
@@ -94,6 +96,24 @@
 
       // fetch on init
       this.fetchData()
+    },
+    computed: {
+      breadcrumbsItems() {
+        return [
+          {
+            title: '書櫃',
+            link: true,
+            disabled: false,
+            to: {
+              name: 'books',
+            },
+          },
+          {
+            title: this.book.title,
+            disabled: false,
+          },
+        ]
+      },
     },
     methods: {
       async fetchData() {
