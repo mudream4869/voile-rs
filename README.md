@@ -26,6 +26,6 @@ target/debug/app
 * Search
 * Tag Filter
 * Add zip
+* Add single txt
 * Upload book cover
 * PDF Book
-* Split txt if it's long
