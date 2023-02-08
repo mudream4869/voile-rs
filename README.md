@@ -23,3 +23,9 @@ target/debug/app
 
 * Config
 * Personal Info
+* Search
+* Tag Filter
+* Add zip
+* Upload book cover
+* PDF Book
+* Split txt if it's long

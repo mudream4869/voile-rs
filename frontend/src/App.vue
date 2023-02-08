@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app theme="dark">
     <v-navigation-drawer v-model="drawer">
       <v-list>
         <v-list-item

@@ -25,7 +25,7 @@ const routes = [
   { path: '/', component: HomePage },
   { name: 'books', path: '/books', component: BooksPage },
   { name: 'book', path: '/books/:book_id', component: BookPage },
-  { name: 'content', path: '/books/:book_id/contents/:content_idx', component: ContentPage },
+  { name: 'content', path: '/books/:book_id/contents/:content_idx/:paging', component: ContentPage },
   { path: '/config', component: ConfigPage },
 ]
 

@@ -10,13 +10,15 @@
               height="200"
               :src="`/api/books/${book.book_id}/book_cover`"
               cover>
-              <v-card-title>
-                {{ book.title }}
-              </v-card-title>
             </v-img>
-            <v-card-title v-else>
+            <v-card-title>
               {{ book.title }}
             </v-card-title>
+
+            <div v-if="book.tags">
+              <v-chip class="ma-2" label
+                      v-for="tag in book.tags" :key="tag"> {{ tag }} </v-chip>
+            </div>
 
             <v-card-actions>
               <v-btn outlined :to="{ name: 'book', params: { book_id: book.book_id }}">

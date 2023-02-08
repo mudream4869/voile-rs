@@ -72,19 +72,19 @@
           <p v-if="book.author"> 作者: {{ book.author }} </p>
 
           <v-btn variant="outlined" v-if="last_content_idx >= 0"
-                 :to="{ name: 'content', params: {book_id, content_idx: last_content_idx}}">
+                 :to="{ name: 'content', params: {book_id, content_idx: last_content_idx, paging: 0}}">
             繼續閱讀: {{ book.content_titles[last_content_idx] }}
           </v-btn>
 
           <v-btn variant="outlined" v-if="last_content_idx == -1"
-                 :to="{ name: 'content', params: {book_id, content_idx: 0}}">
+                 :to="{ name: 'content', params: {book_id, content_idx: 0, paging: 0}}">
             開始閱讀
           </v-btn>
         </v-col>
       </v-row>
       <v-row>
         <v-col cols="4" v-for="(c, idx) in book.content_titles" :key="idx">
-          <v-btn variant="text" :to="{ name: 'content', params: {book_id, content_idx: idx}}">
+          <v-btn variant="text" :to="{ name: 'content', params: {book_id, content_idx: idx, paging: 0}}">
             {{ c }}
           </v-btn>
         </v-col>
