@@ -1,5 +1,10 @@
 ip='127.0.0.1'
 port=8080
+
+# data_dir structure:
+# |- {book_id}
+#    |- 1.txt
+#    |- 2.txt
 data_dir=''
 
 # frontend_dir structure:
@@ -7,3 +12,5 @@ data_dir=''
 # |- favicon.ico
 # |- assets/
 frontend_dir=''
+
+server_data_dir='.'

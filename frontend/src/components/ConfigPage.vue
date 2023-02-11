@@ -15,17 +15,18 @@
         <v-expansion-panel-text>
           <v-form class="ma-md-2">
             <v-text-field label="使用者名字"></v-text-field>
-            <v-file-input accept="image/*" label="使用者頭像"></v-file-input>
-            <v-btn color="success" variant="elevated">儲存</v-btn>
+            <v-file-input
+              :rules="avatar_rules"
+              accept="image/png, image/jpeg"
+              label="使用者頭像" show-size @change="uploadAvatar($event)"></v-file-input>
           </v-form>
         </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel title="使用者偏好">
         <v-expansion-panel-text>
           <v-form class="ma-md-2">
-            <v-text-field label="背景黑白"></v-text-field>
+            <v-btn @click="toggleTheme">Toggle theme</v-btn>
             <v-text-field label="小說字體大小"></v-text-field>
-            <v-btn color="success" variant="elevated">儲存</v-btn>
           </v-form>
         </v-expansion-panel-text>
       </v-expansion-panel>
@@ -34,13 +35,41 @@
 </template>
 
 <script>
-  export default {
-    data: () => {
-      return {
-        setting_filename: '~/.voile/config',
-        data_dir: '~/.voile/books',
-        db_filename: '~/.voile/db.sqlite',
-      }
-    },
-  }
+import { useTheme } from 'vuetify'
+
+export default {
+  data: () => {
+    return {
+      setting_filename: '~/.voile/config',
+      data_dir: '~/.voile/books',
+      db_filename: '~/.voile/db.sqlite',
+
+      avatar_rules: [
+        value => {
+          return !value || !value.length || value[0].size < 2000000 ||
+            'Avatar size should be less than 2 MB!'
+        },
+      ],
+    }
+  },
+  methods: {
+    uploadAvatar(event) {
+      const avatar_file = event.target.files[0];
+      const formData = new FormData();
+      formData.append('avatar', avatar_file, avatar_file.name);
+      fetch(`/api/user/avatar`, {
+        method: 'POST',
+        body: formData,
+      })
+    }
+  },
+  setup () {
+    const theme = useTheme()
+
+    return {
+      theme,
+      toggleTheme: () => theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
+    }
+  },
+}
 </script>

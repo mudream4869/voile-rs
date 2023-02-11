@@ -1,13 +1,16 @@
 extern crate voile;
 
 use actix_web::{get, post, web, Responder};
+use futures_util::TryStreamExt;
 use serde::{Deserialize, Serialize};
+use std::io::Write;
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 struct AppState {
     voile: Arc<Mutex<voile::Voile>>,
     frontend_dir: String,
+    server_data_dir: String,
 }
 
 async fn index(data: web::Data<AppState>) -> std::io::Result<actix_files::NamedFile> {
@@ -85,7 +88,39 @@ async fn get_book_content(
         .lock()
         .unwrap()
         .get_book_content_path(book_id, content_idx)?;
+
     Ok(actix_files::NamedFile::open(content_path)?)
+}
+
+#[get("/api/user/avatar")]
+async fn get_user_avatar(data: web::Data<AppState>) -> actix_web::Result<impl Responder> {
+    let filepath: std::path::PathBuf = [data.server_data_dir.as_str(), "avatar.png"]
+        .iter()
+        .collect();
+    Ok(actix_files::NamedFile::open(filepath)?)
+}
+
+#[post("/api/user/avatar")]
+async fn set_user_avatar(
+    mut payload: actix_multipart::Multipart,
+    data: web::Data<AppState>,
+) -> actix_web::Result<actix_web::HttpResponse> {
+    if let Some(mut field) = payload.try_next().await? {
+        let filepath: std::path::PathBuf = [data.server_data_dir.as_str(), "avatar.png"]
+            .iter()
+            .collect();
+
+        // File::create is blocking operation, use threadpool
+        let mut f = web::block(|| std::fs::File::create(filepath)).await??;
+
+        // Field in turn is stream of *Bytes* object
+        while let Some(chunk) = field.try_next().await? {
+            // filesystem operations are blocking, we have to use threadpool
+            f = web::block(move || f.write_all(&chunk).map(|_| f)).await??;
+        }
+    }
+
+    Ok(actix_web::HttpResponse::Ok().into())
 }
 
 #[get("/api/user/book_proc/{book_id}")]
@@ -96,8 +131,6 @@ async fn get_book_proc(
     let book_id = path.into_inner();
 
     let book_proc = data.voile.lock().unwrap().get_book_proc(book_id)?;
-
-    println!("{:?}", book_proc);
 
     Ok(web::Json(book_proc))
 }
@@ -110,8 +143,6 @@ async fn set_book_proc(
 ) -> actix_web::Result<impl Responder> {
     // TODO: error handling
     let book_id = path.into_inner();
-
-    println!("{:?}", book_proc.0);
 
     data.voile
         .lock()
@@ -127,6 +158,7 @@ struct Config {
     port: u16,
     data_dir: String,
     frontend_dir: String,
+    server_data_dir: Option<String>,
 }
 
 impl Config {
@@ -143,13 +175,20 @@ fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     let args: Vec<String> = std::env::args().collect();
 
-    let config_filename: std::path::PathBuf;
+    let mut config_filename: std::path::PathBuf;
+    let mut default_server_data_dir: std::path::PathBuf = std::env::current_dir()?;
+    default_server_data_dir.push("data");
+
     if args.len() == 1 {
         match home::home_dir() {
-            Some(mut home_dir) => {
-                home_dir.push(".voile");
-                home_dir.push("config.toml");
+            Some(home_dir) => {
                 config_filename = home_dir.clone();
+                config_filename.push(".voile");
+                config_filename.push("config.toml");
+
+                default_server_data_dir = home_dir.clone();
+                default_server_data_dir.push(".voile");
+                default_server_data_dir.push("data");
             }
             None => {
                 return Err(std::io::Error::new(std::io::ErrorKind::Other, ""));
@@ -161,7 +200,10 @@ fn main() -> std::io::Result<()> {
         return Err(std::io::Error::new(std::io::ErrorKind::Other, ""));
     }
 
-    let conf = Config::from_filename(&config_filename)?;
+    let mut conf = Config::from_filename(&config_filename)?;
+    if conf.server_data_dir.is_none() {
+        conf.server_data_dir = Some(default_server_data_dir.to_str().unwrap().to_string());
+    }
     app(conf)
 }
 
@@ -172,6 +214,7 @@ async fn app(conf: Config) -> std::io::Result<()> {
             voile::Voile::new(conf.data_dir.clone()).unwrap(),
         )),
         frontend_dir: conf.frontend_dir.clone(),
+        server_data_dir: conf.server_data_dir.unwrap(),
     };
 
     log::info!("Listen on: http://{}:{}", conf.ip.clone(), conf.port);
@@ -188,6 +231,8 @@ async fn app(conf: Config) -> std::io::Result<()> {
             .service(get_book_cover)
             .service(set_book_detail)
             .service(get_book_content)
+            .service(get_user_avatar)
+            .service(set_user_avatar)
             .service(get_book_proc)
             .service(set_book_proc)
             .route("/", web::get().to(index))

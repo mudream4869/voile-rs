@@ -1,9 +1,9 @@
 <template>
-  <v-app theme="dark">
+  <v-app>
     <v-navigation-drawer v-model="drawer">
       <v-list>
         <v-list-item
-          prepend-avatar="https://i.pravatar.cc/300?u=0"
+          prepend-avatar="/api/user/avatar"
           title="[未填名字]"
         ></v-list-item>
       </v-list>
