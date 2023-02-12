@@ -1,16 +1,16 @@
-extern crate voile;
+pub mod user;
+pub mod voile;
 
 use actix_web::{get, post, web, Responder};
 use futures_util::TryStreamExt;
 use serde::{Deserialize, Serialize};
-use std::io::Write;
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 struct AppState {
     voile: Arc<Mutex<voile::Voile>>,
+    user_config: Arc<Mutex<user::User>>,
     frontend_dir: String,
-    server_data_dir: String,
 }
 
 async fn index(data: web::Data<AppState>) -> std::io::Result<actix_files::NamedFile> {
@@ -94,10 +94,9 @@ async fn get_book_content(
 
 #[get("/api/user/avatar")]
 async fn get_user_avatar(data: web::Data<AppState>) -> actix_web::Result<impl Responder> {
-    let filepath: std::path::PathBuf = [data.server_data_dir.as_str(), "avatar.png"]
-        .iter()
-        .collect();
-    Ok(actix_files::NamedFile::open(filepath)?)
+    Ok(actix_files::NamedFile::open(
+        data.user_config.lock().unwrap().get_user_avatar_path(),
+    )?)
 }
 
 #[post("/api/user/avatar")]
@@ -105,19 +104,12 @@ async fn set_user_avatar(
     mut payload: actix_multipart::Multipart,
     data: web::Data<AppState>,
 ) -> actix_web::Result<actix_web::HttpResponse> {
-    if let Some(mut field) = payload.try_next().await? {
-        let filepath: std::path::PathBuf = [data.server_data_dir.as_str(), "avatar.png"]
-            .iter()
-            .collect();
-
-        // File::create is blocking operation, use threadpool
-        let mut f = web::block(|| std::fs::File::create(filepath)).await??;
-
-        // Field in turn is stream of *Bytes* object
-        while let Some(chunk) = field.try_next().await? {
-            // filesystem operations are blocking, we have to use threadpool
-            f = web::block(move || f.write_all(&chunk).map(|_| f)).await??;
-        }
+    if let Some(field) = payload.try_next().await? {
+        data.user_config
+            .lock()
+            .unwrap()
+            .set_user_avatar(field)
+            .await?;
     }
 
     Ok(actix_web::HttpResponse::Ok().into())
@@ -209,12 +201,14 @@ fn main() -> std::io::Result<()> {
 
 #[actix_web::main]
 async fn app(conf: Config) -> std::io::Result<()> {
+    let server_data_dir = conf.server_data_dir.unwrap();
+
     let data = AppState {
         voile: Arc::new(Mutex::new(
             voile::Voile::new(conf.data_dir.clone()).unwrap(),
         )),
+        user_config: Arc::new(Mutex::new(user::User::new(server_data_dir.clone()))),
         frontend_dir: conf.frontend_dir.clone(),
-        server_data_dir: conf.server_data_dir.unwrap(),
     };
 
     log::info!("Listen on: http://{}:{}", conf.ip.clone(), conf.port);
