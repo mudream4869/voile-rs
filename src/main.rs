@@ -65,7 +65,7 @@ async fn set_book_detail(
     path: web::Path<String>,
     data: web::Data<AppState>,
     book_detail: web::Json<voile::BookDetails>,
-) -> actix_web::Result<impl Responder> {
+) -> actix_web::Result<actix_web::HttpResponse> {
     let book_id = path.into_inner();
 
     data.voile
@@ -73,7 +73,7 @@ async fn set_book_detail(
         .unwrap()
         .set_book_detail(book_id, book_detail.0)?;
 
-    Ok("")
+    Ok(actix_web::HttpResponse::Ok().into())
 }
 
 #[get("/api/books/{book_id}/contents/{content_id}")]
@@ -90,6 +90,25 @@ async fn get_book_content(
         .get_book_content_path(book_id, content_idx)?;
 
     Ok(actix_files::NamedFile::open(content_path)?)
+}
+
+#[get("/api/user/config")]
+async fn get_user_config(data: web::Data<AppState>) -> actix_web::Result<impl Responder> {
+    Ok(web::Json(
+        data.user_config.lock().unwrap().get_user_config(),
+    ))
+}
+
+#[post("/api/user/config")]
+async fn set_user_config(
+    data: web::Data<AppState>,
+    user_config: web::Json<user::UserConfig>,
+) -> actix_web::Result<actix_web::HttpResponse> {
+    data.user_config
+        .lock()
+        .unwrap()
+        .set_user_config(user_config.0)?;
+    Ok(actix_web::HttpResponse::Ok().into())
 }
 
 #[get("/api/user/avatar")]
@@ -227,6 +246,8 @@ async fn app(conf: Config) -> std::io::Result<()> {
             .service(get_book_content)
             .service(get_user_avatar)
             .service(set_user_avatar)
+            .service(get_user_config)
+            .service(set_user_config)
             .service(get_book_proc)
             .service(set_book_proc)
             .route("/", web::get().to(index))

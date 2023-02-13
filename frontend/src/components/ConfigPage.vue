@@ -14,7 +14,12 @@
       <v-expansion-panel title="使用者設定">
         <v-expansion-panel-text>
           <v-form class="ma-md-2">
-            <v-text-field label="使用者名字"></v-text-field>
+            <v-text-field
+              type="text"
+              label="使用者名字"
+              v-model="user_config.name"
+              append-icon="mdi-send"
+              @click:append="updateUserConfig"></v-text-field>
             <v-file-input
               :rules="avatar_rules"
               accept="image/png, image/jpeg"
@@ -50,6 +55,11 @@ export default {
             'Avatar size should be less than 2 MB!'
         },
       ],
+
+      user_config: {
+        name: '',
+        theme: 'light',
+      },
     }
   },
   methods: {
@@ -61,7 +71,22 @@ export default {
         method: 'POST',
         body: formData,
       })
-    }
+    },
+
+    async updateUserConfig() {
+      await fetch(`/api/user/config`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(this.user_config),
+      })
+    },
+
+    async fetchUserConfig() {
+      this.user_config = (await (await fetch(`/api/user/config`)).json())
+    },
   },
   setup () {
     const theme = useTheme()
@@ -70,6 +95,9 @@ export default {
       theme,
       toggleTheme: () => theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
     }
+  },
+  created() {
+    this.fetchUserConfig()
   },
 }
 </script>

@@ -4,7 +4,7 @@
       <v-list>
         <v-list-item
           prepend-avatar="/api/user/avatar"
-          title="[未填名字]"
+          :title="user_config.name ? user_config.name : '[未填名字]'"
         ></v-list-item>
       </v-list>
       <v-divider></v-divider>
@@ -30,6 +30,19 @@
 
 <script>
   export default {
-    data: () => ({ drawer: null }),
+    data: () => ({ 
+      drawer: null,
+      user_config: {
+        name: '',
+      },
+    }),
+    methods: {
+      async fetchUserConfig() {
+        this.user_config = (await (await fetch(`/api/user/config`)).json())
+      },
+    },
+    created() {
+      this.fetchUserConfig()
+    },
   }
 </script>

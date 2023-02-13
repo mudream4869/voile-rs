@@ -38,10 +38,10 @@ cargo run configs/voile.toml
 ## TODO
 
 * Config
-* Personal Info
 * Search
 * Tag Filter
 * Add zip
 * Add single txt
 * Upload book cover
 * PDF Book
+* i18n
