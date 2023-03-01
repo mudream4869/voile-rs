@@ -30,7 +30,10 @@
       <v-expansion-panel title="使用者偏好">
         <v-expansion-panel-text>
           <v-form class="ma-md-2">
-            <v-btn @click="toggleTheme">Toggle theme</v-btn>
+            <v-select label="主題"
+                      :items="['light', 'dark']"
+                      @update:modelValue="updateUserConfig"
+                      v-model="user_config.theme"></v-select>
             <v-text-field label="小說字體大小"></v-text-field>
           </v-form>
         </v-expansion-panel-text>
@@ -73,7 +76,8 @@ export default {
       })
     },
 
-    async updateUserConfig() {
+    async updateUserConfig(value) {
+      this.user_config.theme = value
       await fetch(`/api/user/config`, {
         method: 'POST',
         headers: {
@@ -82,10 +86,13 @@ export default {
         },
         body: JSON.stringify(this.user_config),
       })
+
+      this.theme.global.name.value = this.user_config.theme
     },
 
     async fetchUserConfig() {
       this.user_config = (await (await fetch(`/api/user/config`)).json())
+      this.theme.global.name.value = this.user_config.theme
     },
   },
   setup () {
@@ -93,7 +100,6 @@ export default {
 
     return {
       theme,
-      toggleTheme: () => theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
     }
   },
   created() {

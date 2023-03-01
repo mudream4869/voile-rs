@@ -29,20 +29,31 @@
 </template>
 
 <script>
-  export default {
-    data: () => ({ 
-      drawer: null,
-      user_config: {
-        name: '',
-      },
-    }),
-    methods: {
-      async fetchUserConfig() {
-        this.user_config = (await (await fetch(`/api/user/config`)).json())
-      },
+import { useTheme } from 'vuetify'
+
+export default {
+  data: () => ({ 
+    drawer: null,
+    user_config: {
+      name: '',
+      theme: 'light',
     },
-    created() {
-      this.fetchUserConfig()
+  }),
+  methods: {
+    async fetchUserConfig() {
+      this.user_config = (await (await fetch(`/api/user/config`)).json())
+      this.theme.global.name.value = this.user_config.theme
     },
-  }
+  },
+  created() {
+    this.fetchUserConfig()
+  },
+  setup () {
+    const theme = useTheme()
+
+    return {
+      theme,
+    }
+  },
+}
 </script>

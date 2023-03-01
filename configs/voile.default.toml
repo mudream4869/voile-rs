@@ -13,4 +13,5 @@ data_dir=''
 # |- assets/
 frontend_dir=''
 
-server_data_dir='.'
+# Default server_data_dir = 'folder(config_file)/data'
+# server_data_dir=
