@@ -1,26 +1,40 @@
 # Voile
 
-A personal book reading app.
+Voile is a app designed for personal book reading that supports various file formats. It allows users to store their preferred book format, be it a folder of images or texts, for easy reading.
 
 ## Target
 
 ### Will Provide
 
-* Reading simple book form. For example:
-    * A folder of images. (Manga?)
-    * A folder of txts. (Novel?)
-    * One txt. (Novel?)
+* Support books format:
+    * A folder of images
+    * A folder of txts
+    * One txt (Maybe large)
     * pdf
     * epub
-* Upload/taging/editing info of books.
-* Single binary.
+* Operations:
+    * Upload/Remove books
+    * Edit book information
+    * Group books into a series
+* Single-user login with password authentication.
+* Single binary executable.
+* A self-hosted server.
+
+### **May (or may not 😝)** Provide
+
+* Offers WebDAV as an alternative source for books.
 
 ### Won't Provide
 
 * Multi-user
 * Crawler
+* Native GUI
 
-## How to run
+## How to build and run
+
+(WIP)
+
+Since the GUI is provided by web page, we should build frontend first.
 
 ### Build frontend
 
@@ -37,11 +51,11 @@ cargo run configs/voile.toml
 
 ## TODO
 
-* Config
+* Easy configuration
+* Use rust-embed to embed prebuild frontend
 * Search
 * Tag Filter
 * Add zip
-* Add single txt
 * Upload book cover
 * PDF Book
 * i18n

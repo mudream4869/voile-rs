@@ -1,4 +1,4 @@
-# default
+# Voile frontend
 
 ## Project setup
 
