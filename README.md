@@ -59,3 +59,7 @@ cargo run configs/voile.toml
 * Upload book cover
 * PDF Book
 * i18n
+
+## License
+
+MIT
