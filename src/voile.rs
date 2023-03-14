@@ -172,10 +172,8 @@ impl Voile {
         statement.bind::<&[(_, sqlite::Value)]>(&[(":book_id", book_id.clone().into())][..])?;
 
         let s = statement.next()?;
-        println!("1");
 
         if s == sqlite::State::Row {
-            println!("1");
             return Ok(BookProc {
                 content_idx: statement.read::<i64, _>("content_idx").unwrap() as usize,
                 paging: statement.read::<i64, _>("paging").unwrap() as usize,
