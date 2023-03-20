@@ -1,8 +1,18 @@
 <template>
   <v-app>
     <v-container fluid>
+      <v-row>
+        <v-col>
+          <v-chip class="ma-2"
+                  v-for="tag in tags"
+                  :key="tag"
+                  :color="used_tags.has(tag) ? 'green': 'default'"
+                  @click="toggleTag(tag)"
+                  label> {{ tag }} </v-chip>
+        </v-col>
+      </v-row>
       <v-row dense>
-        <v-col v-for="book in books" :key="book.book_id" :cols="4">
+        <v-col v-for="book in show_books" :key="book.book_id" :cols="4">
           <v-card outlined shaped class="mx-auto ma-md-2" width="400">
             <v-img
               v-if="book.book_cover"
@@ -39,16 +49,44 @@
     data: () => {
       return {
         books: [],
+        tags: [],
+        used_tags: new Set(),
       }
     },
     created() {
       // fetch on init
       this.fetchData()
     },
+    computed: {
+      show_books() {
+        if (this.used_tags.size == 0) {
+          return this.books
+        }
+
+        return this.books.filter(book => {
+          if (book.tags) {
+            for (var i = 0; i < book.tags.length; i++) {
+              if (this.used_tags.has(book.tags[i])) {
+                return true
+              }
+            }
+          }
+          return false
+        })
+      }
+    },
     methods: {
       async fetchData() {
         this.books = (await (await fetch('/api/books')).json()).books
+        this.tags = [...new Set(this.books.map(book => book.tags || []).flat())]
       },
+      toggleTag(tag) {
+        if (this.used_tags.has(tag)) {
+          this.used_tags.delete(tag)
+        } else {
+          this.used_tags.add(tag)
+        }
+      }
     },
   }
 </script>
