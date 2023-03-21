@@ -64,20 +64,25 @@
         }
 
         return this.books.filter(book => {
-          if (book.tags) {
-            for (var i = 0; i < book.tags.length; i++) {
-              if (this.used_tags.has(book.tags[i])) {
-                return true
-              }
-            }
+          if (!book.tags) {
+            return false
           }
-          return false
+          var all_tag = true
+          this.used_tags.forEach(tag => {
+            if (!book.tags_set.has(tag)) {
+              all_tag = false
+            }
+          })
+          return all_tag
         })
       }
     },
     methods: {
       async fetchData() {
-        this.books = (await (await fetch('/api/books')).json()).books
+        this.books = (await (await fetch('/api/books')).json()).books.map(book => {
+          book.tags_set = new Set(book.tags || [])
+          return book
+        })
         this.tags = [...new Set(this.books.map(book => book.tags || []).flat())]
       },
       toggleTag(tag) {
