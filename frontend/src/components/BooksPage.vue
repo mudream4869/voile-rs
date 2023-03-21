@@ -45,35 +45,51 @@
 </template>
 
 <script>
+  import { useRoute } from 'vue-router'
+
   export default {
     data: () => {
       return {
         books: [],
         tags: [],
+        book_type: null,
         used_tags: new Set(),
       }
     },
     created() {
+      const route = useRoute()
+      this.book_type = route.query.book_type
+
       // fetch on init
       this.fetchData()
     },
+    watch: { 
+      '$route.query.book_type': {
+        handler: function(book_type) {
+          console.log(book_type)
+          this.book_type = book_type
+        },
+        deep: true,
+        immediate: true,
+      }
+    },
     computed: {
       show_books() {
-        if (this.used_tags.size == 0) {
-          return this.books
-        }
-
         return this.books.filter(book => {
-          if (!book.tags) {
-            return false
-          }
-          var all_tag = true
+          var match = true
           this.used_tags.forEach(tag => {
             if (!book.tags_set.has(tag)) {
-              all_tag = false
+              match = false
             }
           })
-          return all_tag
+
+          if (this.book_type == '' && !book.book_type) {
+            // ok
+          } else if (this.book_type !== undefined && this.book_type != book.book_type) {
+            match = false
+          }
+
+          return match
         })
       }
     },

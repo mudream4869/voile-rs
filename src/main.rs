@@ -36,6 +36,18 @@ async fn get_books(data: web::Data<AppState>) -> actix_web::Result<impl Responde
     Ok(web::Json(RespBooks { books: books }))
 }
 
+#[get("/api/books_tags")]
+async fn get_books_tags(data: web::Data<AppState>) -> actix_web::Result<impl Responder> {
+    let tags = data.voile.lock().unwrap().get_all_book_tags()?;
+    Ok(web::Json(tags))
+}
+
+#[get("/api/books_types")]
+async fn get_books_types(data: web::Data<AppState>) -> actix_web::Result<impl Responder> {
+    let types = data.voile.lock().unwrap().get_all_book_types()?;
+    Ok(web::Json(types))
+}
+
 #[get("/api/books/{book_id}")]
 async fn get_book(
     path: web::Path<String>,
@@ -240,6 +252,8 @@ async fn app(conf: Config) -> std::io::Result<()> {
             .app_data(web::Data::new(data.clone()))
             .wrap(actix_web::middleware::Logger::default())
             .service(get_books)
+            .service(get_books_tags)
+            .service(get_books_types)
             .service(get_book)
             .service(get_book_cover)
             .service(set_book_detail)

@@ -14,12 +14,13 @@
                 <v-col cols="12">
                   <v-text-field label="標題" required v-model="book.title"></v-text-field>
                   <v-text-field label="作者" v-model="book.author"></v-text-field>
+                  <v-autocomplete label="分類" v-model="book.book_type" :items="books_types"></v-autocomplete>
                 </v-col>
                 <v-col cols="12">
                   <v-chip-group>
                     <v-chip v-for="(tag, i) in book.tags" :key="tag"
                             @click="book.tags.splice(i, 1)"> {{ tag }} </v-chip>
-                    <v-text-field
+                    <v-autocomplete
                       density="compact"
                       variant="solo"
                       append-inner-icon="mdi-plus"
@@ -27,8 +28,9 @@
                       single-line
                       hide-details
                       v-model="input_tag"
+                      :items="books_tags"
                       @click:append-inner="addTag"
-                    ></v-text-field>
+                    ></v-autocomplete>
                   </v-chip-group>
                 </v-col>
               </v-row>
@@ -104,7 +106,11 @@
           content_titles: [],
           tags: null,
           author: null,
+          book_type: null,
         },
+
+        books_tags: [],
+        books_types: [],
 
         book_id: '',
         book_proc: {
@@ -145,6 +151,8 @@
     methods: {
       async fetchData() {
         this.book = (await (await fetch(`/api/books/${this.book_id}`)).json())
+        this.books_tags = (await (await fetch(`/api/books_tags`)).json())
+        this.books_types = (await (await fetch(`/api/books_types`)).json())
         fetch(`/api/user/book_proc/${this.book_id}`).then(async res => {
           if (res.status == 200) {
             this.book_proc = await res.json()
@@ -162,6 +170,7 @@
             title: this.book.title,
             author: this.book.author,
             tags: this.book.tags,
+            book_type: this.book.book_type,
           }),
         })
       },

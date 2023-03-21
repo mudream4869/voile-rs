@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{collections::HashSet, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 
@@ -50,6 +50,9 @@ pub struct BookDetails {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub book_cover: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub book_type: Option<String>,
 }
 
 impl BookDetails {
@@ -59,6 +62,7 @@ impl BookDetails {
             author: None,
             tags: None,
             book_cover: None,
+            book_type: None,
         }
     }
 
@@ -83,6 +87,7 @@ pub struct Book {
     pub tags: Option<Vec<String>>,
     pub content_titles: Vec<String>,
     pub book_cover: Option<String>,
+    pub book_type: Option<String>,
 }
 
 impl Book {
@@ -101,6 +106,10 @@ impl Book {
 
         if let Some(book_cover) = book_detail.book_cover {
             self.book_cover = Some(book_cover)
+        }
+
+        if let Some(book_type) = book_detail.book_type {
+            self.book_type = Some(book_type)
         }
     }
 }
@@ -136,6 +145,19 @@ fn is_image(filename: &String) -> bool {
         }
     }
     false
+}
+
+fn unique_vec(xs: Vec<String>) -> Vec<String> {
+    let mut ys = HashSet::new();
+    for x in xs {
+        ys.insert(x);
+    }
+
+    let mut ret = vec![];
+    for y in ys {
+        ret.push(y);
+    }
+    ret
 }
 
 impl Voile {
@@ -266,6 +288,7 @@ impl Voile {
             author: None,
             tags: None,
             book_cover: None,
+            book_type: None,
         };
 
         // details.json is optional
@@ -347,5 +370,27 @@ impl Voile {
 
         book_detail.write_to_filename(detail_filename)?;
         Ok(())
+    }
+
+    pub fn get_all_book_types(&mut self) -> Result<Vec<String>> {
+        let mut ret = vec![];
+        for book in self.get_books()? {
+            if let Some(book_type) = book.book_type {
+                ret.push(book_type)
+            }
+        }
+        Ok(unique_vec(ret))
+    }
+
+    pub fn get_all_book_tags(&mut self) -> Result<Vec<String>> {
+        let mut ret = vec![];
+        for book in self.get_books()? {
+            if let Some(tags) = book.tags {
+                for tag in tags {
+                    ret.push(tag)
+                }
+            }
+        }
+        Ok(unique_vec(ret))
     }
 }
