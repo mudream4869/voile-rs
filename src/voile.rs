@@ -1,5 +1,7 @@
+use std::io::Write;
 use std::{collections::HashSet, str::FromStr};
 
+use futures_util::TryStreamExt;
 use serde::{Deserialize, Serialize};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -36,6 +38,17 @@ impl std::fmt::Display for NotExist {
 }
 
 impl std::error::Error for NotExist {}
+
+#[derive(Debug)]
+struct FileTypeError(String);
+
+impl std::fmt::Display for FileTypeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "file type: {} not supported", self.0)
+    }
+}
+
+impl std::error::Error for FileTypeError {}
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct BookDetails {
@@ -312,6 +325,38 @@ impl Voile {
 
         self.book_cache.insert(book_id.clone(), book.clone());
         Ok(book)
+    }
+
+    pub async fn add_book(&self, mut field: actix_multipart::Field) -> Result<()> {
+        // TODO: refine error
+
+        let filename = field.content_disposition().get_filename().unwrap();
+
+        if !filename.ends_with(".txt") {
+            return Err(Box::new(FileTypeError(String::from_str(filename).unwrap())));
+        }
+
+        let book_id = filename.strip_suffix(".txt").unwrap();
+
+        let folderpath: std::path::PathBuf = [self.books_dir.as_str(), book_id].iter().collect();
+
+        // prevent same folder_name
+        std::fs::create_dir(folderpath)?;
+
+        let filepath: std::path::PathBuf = [self.books_dir.as_str(), book_id, filename]
+            .iter()
+            .collect();
+
+        // File::create is blocking operation, use threadpool
+        let mut f = actix_web::web::block(|| std::fs::File::create(filepath)).await??;
+
+        // Field in turn is stream of *Bytes* object
+        while let Some(chunk) = field.try_next().await? {
+            // filesystem operations are blocking, we have to use threadpool
+            f = actix_web::web::block(move || f.write_all(&chunk).map(|_| f)).await??;
+        }
+
+        Ok(())
     }
 
     pub fn get_book_content_path(

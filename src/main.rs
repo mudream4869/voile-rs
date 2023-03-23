@@ -60,6 +60,18 @@ async fn get_book(
     Ok(web::Json(book))
 }
 
+#[post("/api/books")]
+async fn add_book(
+    mut payload: actix_multipart::Multipart,
+    data: web::Data<AppState>,
+) -> actix_web::Result<actix_web::HttpResponse> {
+    if let Some(field) = payload.try_next().await? {
+        data.voile.lock().unwrap().add_book(field).await?;
+    }
+
+    Ok(actix_web::HttpResponse::Ok().into())
+}
+
 #[get("/api/books/{book_id}/book_cover")]
 async fn get_book_cover(
     path: web::Path<String>,
@@ -255,6 +267,7 @@ async fn app(conf: Config) -> std::io::Result<()> {
             .service(get_books_tags)
             .service(get_books_types)
             .service(get_book)
+            .service(add_book)
             .service(get_book_cover)
             .service(set_book_detail)
             .service(get_book_content)

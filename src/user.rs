@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use futures_util::TryStreamExt;
 
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct UserConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -76,10 +78,7 @@ impl User {
             .collect()
     }
 
-    pub async fn set_user_avatar(
-        &self,
-        mut field: actix_multipart::Field,
-    ) -> actix_web::Result<()> {
+    pub async fn set_user_avatar(&self, mut field: actix_multipart::Field) -> Result<()> {
         // TODO: refine error
         let filepath = self.get_user_avatar_path();
 
