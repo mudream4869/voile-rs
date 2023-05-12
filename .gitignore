@@ -1,11 +1,3 @@
 /target
-books
 
 .vscode
-
-/tools/*.txt
-
-*Zone.Identifier
-
-# Not prepared
-tools
