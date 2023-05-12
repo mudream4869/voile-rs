@@ -152,7 +152,9 @@
       async fetchData() {
         this.book = (await (await fetch(`/api/books/${this.book_id}`)).json())
         this.books_tags = (await (await fetch(`/api/books_tags`)).json())
+        this.books_tags.sort()
         this.books_types = (await (await fetch(`/api/books_types`)).json())
+        this.books_types.sort()
         fetch(`/api/user/book_proc/${this.book_id}`).then(async res => {
           if (res.status == 200) {
             this.book_proc = await res.json()

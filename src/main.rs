@@ -6,22 +6,59 @@ use futures_util::TryStreamExt;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "frontend/dist"]
+struct DefaultServerAsset;
+
+fn handle_default_embedded_file(path: &str) -> actix_web::HttpResponse {
+    println!("{}", path);
+    match DefaultServerAsset::get(path) {
+        Some(content) => actix_web::HttpResponse::Ok()
+            .content_type(mime_guess::from_path(path).first_or_octet_stream().as_ref())
+            .body(content.data.into_owned()),
+        None => actix_web::HttpResponse::NotFound().body("404 Not Found"),
+    }
+}
+
 #[derive(Clone)]
 struct AppState {
     voile: Arc<Mutex<voile::Voile>>,
     user_config: Arc<Mutex<user::User>>,
-    frontend_dir: String,
+    frontend_dir: Option<String>,
 }
 
+#[actix_web::get("/")]
+async fn default_index() -> impl Responder {
+    handle_default_embedded_file("index.html")
+}
+
+#[actix_web::get("/favicon.ico")]
+async fn default_favicon() -> impl Responder {
+    handle_default_embedded_file("favicon.ico")
+}
+
+#[actix_web::get("/assets/{_:.*}")]
+async fn default_assets(path: web::Path<String>) -> impl Responder {
+    handle_default_embedded_file(format!("assets/{}", path).as_str())
+}
+
+#[actix_web::get("/")]
 async fn index(data: web::Data<AppState>) -> std::io::Result<actix_files::NamedFile> {
     let index_path: std::path::PathBuf =
-        [data.frontend_dir.as_str(), "index.html"].iter().collect();
+        [data.frontend_dir.as_ref().unwrap().as_str(), "index.html"]
+            .iter()
+            .collect();
     Ok(actix_files::NamedFile::open(index_path)?)
 }
 
+#[actix_web::get("/favicon.ico")]
 async fn favicon(data: web::Data<AppState>) -> std::io::Result<actix_files::NamedFile> {
     let favicon_path: std::path::PathBuf =
-        [data.frontend_dir.as_str(), "favicon.ico"].iter().collect();
+        [data.frontend_dir.as_ref().unwrap().as_str(), "favicon.ico"]
+            .iter()
+            .collect();
     Ok(actix_files::NamedFile::open(favicon_path)?)
 }
 
@@ -192,7 +229,7 @@ struct Config {
     ip: String,
     port: u16,
     data_dir: String,
-    frontend_dir: String,
+    frontend_dir: Option<String>,
     server_data_dir: Option<String>,
 }
 
@@ -257,10 +294,7 @@ async fn app(conf: Config) -> std::io::Result<()> {
     log::info!("Listen on: http://{}:{}", conf.ip.clone(), conf.port);
 
     actix_web::HttpServer::new(move || {
-        let assets_path: std::path::PathBuf =
-            [conf.frontend_dir.as_str(), "assets"].iter().collect();
-
-        actix_web::App::new()
+        let app = actix_web::App::new()
             .app_data(web::Data::new(data.clone()))
             .wrap(actix_web::middleware::Logger::default())
             .service(get_books)
@@ -276,10 +310,21 @@ async fn app(conf: Config) -> std::io::Result<()> {
             .service(get_user_config)
             .service(set_user_config)
             .service(get_book_proc)
-            .service(set_book_proc)
-            .route("/", web::get().to(index))
-            .route("/favicon.ico", web::get().to(favicon))
-            .service(actix_files::Files::new("/assets", assets_path).show_files_listing())
+            .service(set_book_proc);
+
+        match conf.frontend_dir.as_ref() {
+            Some(frontend_dir) => {
+                let assets_path: std::path::PathBuf =
+                    [frontend_dir.as_str(), "assets"].iter().collect();
+                app.service(index)
+                    .service(favicon)
+                    .service(actix_files::Files::new("/assets", assets_path).show_files_listing())
+            }
+            None => app
+                .service(default_index)
+                .service(default_favicon)
+                .service(default_assets),
+        }
     })
     .bind((conf.ip, conf.port))?
     .run()

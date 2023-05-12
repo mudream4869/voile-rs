@@ -43,6 +43,12 @@ cd frontend
 yarn build
 ```
 
+### Build backend
+
+```bash
+cargo build
+```
+
 ### Start
 
 ```bash
@@ -51,14 +57,14 @@ cargo run configs/voile.toml
 
 ## TODO
 
-* Easy configuration
-* Use rust-embed to embed prebuild frontend
-* Search
-* Tag Filter
-* Add zip
-* Upload book cover
-* PDF Book
-* i18n
+- [ ] Easy configuration
+- [x] Use rust-embed to embed prebuild frontend
+- [ ] Search
+- [ ] Tag Filter
+- [ ] Add zip
+- [ ] Upload book cover
+- [ ] PDF Book
+- [ ] i18n
 
 ## License
 
