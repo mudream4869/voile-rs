@@ -2,9 +2,9 @@
   <v-app>
     <v-form class="ma-md-2">
       <v-file-input
-        accept="text/*"
+        accept="text/*, application/zip"
         :clearable="true"
-        label="txt檔案"
+        label="txt檔案/zip檔案"
         :key="fileInputKey"
         @change="uploadBook($event)"></v-file-input>
     </v-form>
@@ -14,6 +14,8 @@
       <h2> 可上傳檔案格式 </h2>
       <h3> 單個 txt 檔案 </h3>
       <p> 通常會是小說類型 </p>
+      <h3> 單個 zip 檔案 </h3>
+      <p> 通常會是漫畫類型 </p>
     </div>
   </v-app>
 </template>

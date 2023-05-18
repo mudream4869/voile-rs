@@ -327,14 +327,40 @@ impl Voile {
         Ok(book)
     }
 
-    pub async fn add_book(&self, mut field: actix_multipart::Field) -> Result<()> {
+    pub async fn add_book(&self, field: actix_multipart::Field) -> Result<()> {
         // TODO: refine error
 
         let filename = field.content_disposition().get_filename().unwrap();
 
-        if !filename.ends_with(".txt") {
-            return Err(Box::new(FileTypeError(String::from_str(filename).unwrap())));
+        if filename.ends_with(".txt") {
+            return self.add_book_txt(field).await;
+        } else if filename.ends_with(".zip") {
+            return self.add_book_zip(field).await;
         }
+
+        Err(Box::new(FileTypeError(
+            String::from_str("Not match txt or zip").unwrap(),
+        )))
+    }
+
+    async fn download_file_from_multipart(
+        &self,
+        mut field: actix_multipart::Field,
+        filepath: std::path::PathBuf,
+    ) -> Result<()> {
+        let mut f = actix_web::web::block(|| std::fs::File::create(filepath)).await??;
+
+        // Field in turn is stream of *Bytes* object
+        while let Some(chunk) = field.try_next().await? {
+            // filesystem operations are blocking, we have to use threadpool
+            f = actix_web::web::block(move || f.write_all(&chunk).map(|_| f)).await??;
+        }
+
+        Ok(())
+    }
+
+    async fn add_book_txt(&self, field: actix_multipart::Field) -> Result<()> {
+        let filename = field.content_disposition().get_filename().unwrap();
 
         let book_id = filename.strip_suffix(".txt").unwrap();
 
@@ -347,14 +373,49 @@ impl Voile {
             .iter()
             .collect();
 
-        // File::create is blocking operation, use threadpool
-        let mut f = actix_web::web::block(|| std::fs::File::create(filepath)).await??;
+        self.download_file_from_multipart(field, filepath).await
+    }
 
-        // Field in turn is stream of *Bytes* object
-        while let Some(chunk) = field.try_next().await? {
-            // filesystem operations are blocking, we have to use threadpool
-            f = actix_web::web::block(move || f.write_all(&chunk).map(|_| f)).await??;
+    async fn add_book_zip(&self, field: actix_multipart::Field) -> Result<()> {
+        let filename =
+            String::from_str(field.content_disposition().get_filename().unwrap()).unwrap();
+
+        let book_id = filename.strip_suffix(".zip").unwrap();
+
+        let folderpath: std::path::PathBuf = [self.books_dir.as_str(), book_id].iter().collect();
+
+        // prevent same folder_name
+        std::fs::create_dir(folderpath)?;
+
+        let filepath: std::path::PathBuf = [self.books_dir.as_str(), book_id, filename.as_str()]
+            .iter()
+            .collect();
+
+        // TODO: tmp dir
+        self.download_file_from_multipart(field, filepath.clone())
+            .await?;
+
+        let zip_file = std::fs::File::open(filepath.clone())?;
+        let mut archive = zip::ZipArchive::new(zip_file)?;
+
+        for i in 0..archive.len() {
+            // TODO: refine
+            let mut file = archive.by_index(i).unwrap();
+
+            if (*file.name()).ends_with('/') {
+                continue;
+            }
+
+            let out_filepath: std::path::PathBuf = [self.books_dir.as_str(), book_id, file.name()]
+                .iter()
+                .collect();
+
+            let mut outfile = std::fs::File::create(&out_filepath)?;
+            std::io::copy(&mut file, &mut outfile)?;
         }
+
+        // TODO: defer remove!
+        std::fs::remove_file(filepath)?;
 
         Ok(())
     }

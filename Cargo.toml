@@ -19,6 +19,7 @@ actix-multipart = "0.5.0"
 futures-util = "0.3.26"
 rust-embed="6.6.1"
 mime_guess = { version = "2" }
+zip = "0.6"
 
 [lib]
 name = "voile"
