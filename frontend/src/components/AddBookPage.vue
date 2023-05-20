@@ -3,6 +3,7 @@
     <v-form class="ma-md-2">
       <v-file-input
         accept="text/*, application/zip"
+        multiple
         :clearable="true"
         label="txt檔案/zip檔案"
         :key="fileInputKey"
@@ -12,9 +13,9 @@
       <v-alert color="success" closable text="上傳成功" v-model="alertSuccess"></v-alert>
       <v-alert color="warning" closable text="上傳失敗" v-model="alertFail"></v-alert>
       <h2> 可上傳檔案格式 </h2>
-      <h3> 單個 txt 檔案 </h3>
+      <h3> txt 檔案 </h3>
       <p> 通常會是小說類型 </p>
-      <h3> 單個 zip 檔案 </h3>
+      <h3> zip 檔案 </h3>
       <p> 通常會是漫畫類型 </p>
     </div>
   </v-app>
@@ -34,9 +35,11 @@ export default {
       if (!event.target.files) {
         return
       }
-      const avatar_file = event.target.files[0];
       const formData = new FormData();
-      formData.append('book', avatar_file, avatar_file.name);
+      for (var i = 0; i < event.target.files.length; i++) {
+        const avatar_file = event.target.files[i];
+        formData.append('book', avatar_file, avatar_file.name);
+      }
       fetch(`/api/books`, {
         method: 'POST',
         body: formData,

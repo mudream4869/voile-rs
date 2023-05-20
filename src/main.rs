@@ -3,6 +3,8 @@ pub mod voile;
 
 use actix_web::{get, post, web, Responder};
 use futures_util::TryStreamExt;
+use futures_util::StreamExt as _;
+
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 
@@ -102,7 +104,8 @@ async fn add_book(
     mut payload: actix_multipart::Multipart,
     data: web::Data<AppState>,
 ) -> actix_web::Result<actix_web::HttpResponse> {
-    if let Some(field) = payload.try_next().await? {
+    while let Some(item) = payload.next().await {
+        let field = item?;
         data.voile.lock().unwrap().add_book(field).await?;
     }
 
