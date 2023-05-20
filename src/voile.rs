@@ -384,38 +384,35 @@ impl Voile {
 
         let folderpath: std::path::PathBuf = [self.books_dir.as_str(), book_id].iter().collect();
 
+        // TODO: exception safe
         // prevent same folder_name
         std::fs::create_dir(folderpath)?;
 
-        let filepath: std::path::PathBuf = [self.books_dir.as_str(), book_id, filename.as_str()]
-            .iter()
-            .collect();
+        let tmp_dir = tempfile::tempdir()?;
 
-        // TODO: tmp dir
-        self.download_file_from_multipart(field, filepath.clone())
+        let zip_filepath = tmp_dir.path().join(filename.as_str());
+
+        self.download_file_from_multipart(field, zip_filepath.clone())
             .await?;
 
-        let zip_file = std::fs::File::open(filepath.clone())?;
+        let zip_file = std::fs::File::open(zip_filepath.clone())?;
         let mut archive = zip::ZipArchive::new(zip_file)?;
 
         for i in 0..archive.len() {
-            // TODO: refine
-            let mut file = archive.by_index(i).unwrap();
+            let mut file = archive.by_index(i)?;
 
-            if (*file.name()).ends_with('/') {
+            let filename = file.name();
+            if filename.ends_with('/') {
                 continue;
             }
 
-            let out_filepath: std::path::PathBuf = [self.books_dir.as_str(), book_id, file.name()]
+            let out_filepath: std::path::PathBuf = [self.books_dir.as_str(), book_id, filename]
                 .iter()
                 .collect();
 
             let mut outfile = std::fs::File::create(&out_filepath)?;
             std::io::copy(&mut file, &mut outfile)?;
         }
-
-        // TODO: defer remove!
-        std::fs::remove_file(filepath)?;
 
         Ok(())
     }

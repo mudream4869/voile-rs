@@ -20,6 +20,7 @@ futures-util = "0.3.26"
 rust-embed="6.6.1"
 mime_guess = { version = "2" }
 zip = "0.6"
+tempfile = "3"
 
 [lib]
 name = "voile"
