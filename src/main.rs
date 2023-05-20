@@ -2,8 +2,8 @@ pub mod user;
 pub mod voile;
 
 use actix_web::{get, post, web, Responder};
-use futures_util::TryStreamExt;
 use futures_util::StreamExt as _;
+use futures_util::TryStreamExt;
 
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
