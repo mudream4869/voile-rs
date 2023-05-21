@@ -1,5 +1,5 @@
 use std::io::Write;
-use std::{collections::HashSet, str::FromStr};
+use std::str::FromStr;
 
 use futures_util::TryStreamExt;
 use serde::{Deserialize, Serialize};
@@ -81,7 +81,7 @@ impl BookDetails {
 
     pub fn from_filename<P: AsRef<std::path::Path>>(filename: P) -> std::io::Result<BookDetails> {
         let detail_str = std::fs::read_to_string(filename)?;
-        let detail: BookDetails = serde_json::from_str(detail_str.as_str())?;
+        let detail: BookDetails = serde_json::from_str(&detail_str)?;
         Ok(detail)
     }
 
@@ -149,28 +149,16 @@ pub struct Voile {
     db_conn: std::sync::Mutex<sqlite::Connection>,
 }
 
-fn is_image(filename: &String) -> bool {
-    // TODO
-    let img_suffixes: Vec<&str> = vec![".png", ".jpg"];
-    for suffix in img_suffixes {
-        if filename.ends_with(suffix) {
-            return true;
-        }
+fn is_image(file_path: &str) -> bool {
+    let path = std::path::Path::new(file_path);
+    let extension = path.extension();
+
+    if let Some(ext) = extension {
+        let ext_str = ext.to_string_lossy().to_lowercase();
+        return ext_str == "jpg" || ext_str == "jpeg" || ext_str == "png" || ext_str == "gif";
     }
+
     false
-}
-
-fn unique_vec(xs: Vec<String>) -> Vec<String> {
-    let mut ys = HashSet::new();
-    for x in xs {
-        ys.insert(x);
-    }
-
-    let mut ret = vec![];
-    for y in ys {
-        ret.push(y);
-    }
-    ret
 }
 
 impl Voile {
@@ -272,7 +260,7 @@ impl Voile {
         let full_dir: std::path::PathBuf =
             [self.books_dir.as_str(), book_id.as_str()].iter().collect();
 
-        let mut contents = vec![];
+        let mut content_titles = vec![];
         for path in std::fs::read_dir(full_dir)? {
             let entry = path?;
 
@@ -280,7 +268,7 @@ impl Voile {
                 continue;
             }
 
-            let title = String::from_str(entry.file_name().to_str().unwrap()).unwrap();
+            let title = String::from_str(entry.file_name().to_str().unwrap())?;
 
             if title == "details.json" {
                 continue;
@@ -289,15 +277,15 @@ impl Voile {
                 continue;
             }
 
-            contents.push(title);
+            content_titles.push(title);
         }
 
-        contents.sort();
+        content_titles.sort();
 
         let mut book = Book {
             book_id: book_id.clone(),
             title: book_id.clone(),
-            content_titles: contents,
+            content_titles,
             author: None,
             tags: None,
             book_cover: None,
@@ -377,8 +365,7 @@ impl Voile {
     }
 
     async fn add_book_zip(&self, field: actix_multipart::Field) -> Result<()> {
-        let filename =
-            String::from_str(field.content_disposition().get_filename().unwrap()).unwrap();
+        let filename = String::from_str(field.content_disposition().get_filename().unwrap())?;
 
         let book_id = filename.strip_suffix(".zip").unwrap();
 
@@ -482,18 +469,20 @@ impl Voile {
                 ret.push(book_type)
             }
         }
-        Ok(unique_vec(ret))
+        ret.sort();
+        ret.dedup();
+        Ok(ret)
     }
 
     pub fn get_all_book_tags(&mut self) -> Result<Vec<String>> {
         let mut ret = vec![];
         for book in self.get_books()? {
             if let Some(tags) = book.tags {
-                for tag in tags {
-                    ret.push(tag)
-                }
+                ret.extend(tags);
             }
         }
-        Ok(unique_vec(ret))
+        ret.sort();
+        ret.dedup();
+        Ok(ret)
     }
 }

@@ -25,7 +25,7 @@ impl UserConfig {
 
     pub fn from_filename<P: AsRef<std::path::Path>>(filename: P) -> std::io::Result<UserConfig> {
         let detail_str = std::fs::read_to_string(filename)?;
-        let detail: UserConfig = serde_json::from_str(detail_str.as_str())?;
+        let detail: UserConfig = serde_json::from_str(&detail_str)?;
         Ok(detail)
     }
 

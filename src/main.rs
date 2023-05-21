@@ -106,7 +106,10 @@ async fn add_book(
 ) -> actix_web::Result<actix_web::HttpResponse> {
     while let Some(item) = payload.next().await {
         let field = item?;
-        data.voile.lock().unwrap().add_book(field).await?;
+        let res = data.voile.lock().unwrap().add_book(field).await;
+        if let Some(err) = res.err() {
+            log::warn!("Skip book due to {}", err);
+        }
     }
 
     Ok(actix_web::HttpResponse::Ok().into())
