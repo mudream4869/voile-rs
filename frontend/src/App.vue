@@ -2,10 +2,8 @@
   <v-app>
     <v-navigation-drawer v-model="drawer">
       <v-list>
-        <v-list-item
-          prepend-avatar="/api/user/avatar"
-          :title="user_config.name ? user_config.name : '[未填名字]'"
-        ></v-list-item>
+        <v-list-item prepend-avatar="/api/user/avatar"
+          :title="user_config.name ? user_config.name : '[未填名字]'"></v-list-item>
       </v-list>
       <v-divider></v-divider>
 
@@ -16,17 +14,10 @@
             <v-list-item v-bind="props" :to="'/books'" prepend-icon="mdi-folder" title="書籍" value="books">
             </v-list-item>
           </template>
-          <v-list-item
-            v-for="book_type in books_types"
-            :to="{ name: 'books', query: {book_type}}"
-            prepend-icon="mdi-book"
-            :title="book_type"
-            :value="'books_' + book_type">
+          <v-list-item v-for="book_type in books_types" :to="{ name: 'books', query: { book_type } }"
+            prepend-icon="mdi-book" :title="book_type" :value="'books_' + book_type">
           </v-list-item>
-          <v-list-item
-            :to="{ name: 'books', query: {book_type: ''}}"
-            title="無分類"
-            value="books_no_type">
+          <v-list-item :to="{ name: 'books', query: { book_type: '' } }" title="無分類" value="books_no_type">
           </v-list-item>
         </v-list-group>
         <v-list-item :to="'/add_book'" prepend-icon="mdi-plus" title="新增書籍" value="add_book"></v-list-item>
@@ -50,7 +41,7 @@
 import { useTheme } from 'vuetify'
 
 export default {
-  data: () => ({ 
+  data: () => ({
     drawer: null,
     user_config: {
       name: '',
@@ -68,7 +59,7 @@ export default {
   created() {
     this.fetchUserConfig()
   },
-  setup () {
+  setup() {
     const theme = useTheme()
 
     return {

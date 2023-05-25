@@ -1,12 +1,7 @@
 <template>
   <v-app>
     <v-form class="ma-md-2">
-      <v-file-input
-        accept="text/*, application/zip"
-        multiple
-        :clearable="true"
-        label="txt檔案/zip檔案"
-        :key="fileInputKey"
+      <v-file-input accept="text/*, application/zip" multiple :clearable="true" label="txt檔案/zip檔案" :key="fileInputKey"
         @change="uploadBook($event)"></v-file-input>
     </v-form>
     <div class="ma-md-2">

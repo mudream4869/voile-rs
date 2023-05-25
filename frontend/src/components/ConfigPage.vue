@@ -14,26 +14,18 @@
       <v-expansion-panel title="使用者設定">
         <v-expansion-panel-text>
           <v-form class="ma-md-2">
-            <v-text-field
-              type="text"
-              label="使用者名字"
-              v-model="user_config.name"
-              append-icon="mdi-send"
+            <v-text-field type="text" label="使用者名字" v-model="user_config.name" append-icon="mdi-send"
               @click:append="updateUserConfig"></v-text-field>
-            <v-file-input
-              :rules="avatar_rules"
-              accept="image/png, image/jpeg"
-              label="使用者頭像" show-size @change="uploadAvatar($event)"></v-file-input>
+            <v-file-input :rules="avatar_rules" accept="image/png, image/jpeg" label="使用者頭像" show-size
+              @change="uploadAvatar($event)"></v-file-input>
           </v-form>
         </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel title="使用者偏好">
         <v-expansion-panel-text>
           <v-form class="ma-md-2">
-            <v-select label="主題"
-                      :items="['light', 'dark']"
-                      @update:modelValue="updateUserConfig"
-                      v-model="user_config.theme"></v-select>
+            <v-select label="主題" :items="['light', 'dark']" @update:modelValue="updateUserConfig"
+              v-model="user_config.theme"></v-select>
             <v-text-field label="小說字體大小"></v-text-field>
           </v-form>
         </v-expansion-panel-text>
@@ -95,7 +87,7 @@ export default {
       this.theme.global.name.value = this.user_config.theme
     },
   },
-  setup () {
+  setup() {
     const theme = useTheme()
 
     return {
