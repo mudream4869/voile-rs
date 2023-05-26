@@ -12,6 +12,7 @@ import AddBookPage from './components/AddBookPage.vue'
 import ContentPage from './components/ContentPage.vue'
 import HomePage from './components/HomePage.vue'
 import ConfigPage from './components/ConfigPage.vue'
+import BooksManage from './components/BooksManage.vue'
 
 // Composables
 import { createApp } from 'vue'
@@ -29,6 +30,7 @@ const routes = [
   { name: 'add_book', path: '/add_book', component: AddBookPage },
   { name: 'content', path: '/books/:book_id/contents/:content_idx/:paging', component: ContentPage },
   { path: '/config', component: ConfigPage },
+  { name: 'books_manage', path: '/books_manage', component: BooksManage },
 ]
 
 const router = createRouter({

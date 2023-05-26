@@ -21,6 +21,7 @@
           </v-list-item>
         </v-list-group>
         <v-list-item :to="'/add_book'" prepend-icon="mdi-plus" title="新增書籍" value="add_book"></v-list-item>
+        <v-list-item :to="'/books_manage'" prepend-icon="mdi-widgets" title="書籍管理" value="books_manage"></v-list-item>
         <v-list-item :to="'/config'" prepend-icon="mdi-widgets" title="個人設定" value="config"></v-list-item>
       </v-list>
     </v-navigation-drawer>
