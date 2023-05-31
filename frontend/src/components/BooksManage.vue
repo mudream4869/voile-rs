@@ -103,6 +103,8 @@
 </template>
 
 <script>
+import { getAllBooks } from '@/api/books'
+
 export default {
   data: () => {
     return {
@@ -151,10 +153,7 @@ export default {
   },
   methods: {
     async fetchData() {
-      this.books = (await (await fetch('/api/books')).json()).books.map(book => {
-        book.tags_set = new Set(book.tags || [])
-        return book
-      })
+      this.books = await getAllBooks()
       this.tags = [...new Set(this.books.map(book => book.tags || []).flat())]
       this.book_types = [...new Set(this.books.map(book => book.book_type || '<NULL>'))]
     },

@@ -35,6 +35,7 @@
 
 <script>
 import { useRoute } from 'vue-router'
+import { getAllBooks } from '@/api/books'
 
 export default {
   data: () => {
@@ -83,10 +84,7 @@ export default {
   },
   methods: {
     async fetchData() {
-      this.books = (await (await fetch('/api/books')).json()).books.map(book => {
-        book.tags_set = new Set(book.tags || [])
-        return book
-      })
+      this.books = await getAllBooks()
       this.tags = [...new Set(this.books.map(book => book.tags || []).flat())]
     },
     toggleTag(tag) {

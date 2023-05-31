@@ -78,6 +78,7 @@
 
 <script>
 import { useRoute } from 'vue-router'
+import { updateBookDetail, getBook, getAllTags, getAllTypes } from '@/api/books'
 
 export default {
   data: () => {
@@ -131,11 +132,9 @@ export default {
   },
   methods: {
     async fetchData() {
-      this.book = (await (await fetch(`/api/books/${this.book_id}`)).json())
-      this.books_tags = (await (await fetch(`/api/books_tags`)).json())
-      this.books_tags.sort()
-      this.books_types = (await (await fetch(`/api/books_types`)).json())
-      this.books_types.sort()
+      this.book = await getBook(this.book_id)
+      this.books_tags = await getAllTags()
+      this.books_types = await getAllTypes()
       fetch(`/api/user/book_proc/${this.book_id}`).then(async res => {
         if (res.status == 200) {
           this.book_proc = await res.json()
@@ -143,18 +142,11 @@ export default {
       })
     },
     async updateBookDetail() {
-      await fetch(`/api/books/${this.book_id}`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: this.book.title,
-          author: this.book.author,
-          tags: this.book.tags,
-          book_type: this.book.book_type,
-        }),
+      await updateBookDetail(this.book_id, {
+        title: this.book.title,
+        author: this.book.author,
+        tags: this.book.tags,
+        book_type: this.book.book_type,
       })
     },
     addTag() {
