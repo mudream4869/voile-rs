@@ -14,22 +14,20 @@
 
         <v-col cols="3">
           <v-btn :disabled="selected_bookids.length == 0" variant="outlined" color="red"> 刪除 </v-btn>
-
-          <v-menu>
-            <template v-slot:activator="{ props }">
-              <v-btn color="primary" v-bind="props" variant="outlined" :disabled="selected_bookids.length == 0">
-                修改類別
-              </v-btn>
-            </template>
-            <v-list>
-              <v-list-item v-for="btype in book_types" :key="btype" :value="btype">
-                <v-list-item-title>{{ btype }}</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-menu>
+          <v-btn :disabled="selected_bookids.length == 0" v-on:click="toggleChangeType()" variant="outlined" color="blue">
+            修改類別 </v-btn>
         </v-col>
 
       </v-row>
+      <v-dialog transition="dialog-top-transition" width="auto" v-model="change_type.show">
+        <v-card>
+          <v-card-title> 修改 {{ selected_bookids.length }} 本書的類別 </v-card-title>
+          <v-card-text>
+            <v-autocomplete label="分類" v-model="change_type.book_type" :items="book_types"></v-autocomplete>
+            <v-btn v-on:click="changeBooksType()" color="blue"> 確認修改 </v-btn>
+          </v-card-text>
+        </v-card>
+      </v-dialog>
       <v-dialog transition="dialog-top-transition" width="auto" v-model="detail.show">
         <v-card>
           <v-card-title> {{ detail.book.title }}</v-card-title>
@@ -64,7 +62,7 @@
               選擇
             </th>
             <th class="text-left">
-              類別
+              書籍類別
             </th>
             <th class="text-left">
               標題
@@ -93,7 +91,7 @@
               <v-chip class="ma-2" label v-for="tag in book.tags" :key="tag"> {{ tag }} </v-chip>
             </td>
             <td>
-              <v-btn v-on:click="show_book_detail(book.book_id)">詳細資料</v-btn>
+              <v-btn v-on:click="showBookDetail(book.book_id)">詳細資料</v-btn>
             </td>
           </tr>
         </tbody>
@@ -103,6 +101,9 @@
 </template>
 
 <script>
+import { getAllTags } from '@/api/books'
+import { updateBookDetail } from '@/api/books'
+import { getAllTypes } from '@/api/books'
 import { getAllBooks } from '@/api/books'
 
 export default {
@@ -120,7 +121,12 @@ export default {
         show: false,
         book_id: null,
         book: {},
-      }
+      },
+
+      change_type: {
+        show: false,
+        book_type: '',
+      },
     }
   },
   created() {
@@ -154,8 +160,9 @@ export default {
   methods: {
     async fetchData() {
       this.books = await getAllBooks()
-      this.tags = [...new Set(this.books.map(book => book.tags || []).flat())]
-      this.book_types = [...new Set(this.books.map(book => book.book_type || '<NULL>'))]
+      this.tags = await getAllTags()
+      this.book_types = await getAllTypes()
+      this.book_types.push('<NULL>')
     },
     toggleTag(tag) {
       if (this.used_tags.has(tag)) {
@@ -171,11 +178,25 @@ export default {
         this.book_type = btype
       }
     },
-    show_book_detail(book_id) {
+    toggleChangeType() {
+      this.change_type.show = true
+    },
+    showBookDetail(book_id) {
       this.detail.show = true
       this.detail.book_id = book_id
       this.detail.book = this.books.find(book => book.book_id == book_id)
-    }
+    },
+    changeBooksType() {
+      this.change_type.show = false
+      if (this.selected_bookids.length == 0 || this.change_type.book_type == '') {
+        return
+      }
+      this.selected_bookids.forEach(book_id => {
+        updateBookDetail(book_id, {
+          book_type: this.change_type.book_type,
+        })
+      })
+    },
   },
 }
 </script>
