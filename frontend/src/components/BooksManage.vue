@@ -198,6 +198,14 @@ export default {
           book_type: this.change_type.book_type,
         })
       })
+      this.books.forEach(book => {
+        if (this.selected_bookids.indexOf(book.book_id) != -1) {
+          book.book_type = this.change_type.book_type
+        }
+      })
+
+      this.selected_bookids = []
+      this.change_type.book_type = ''
     },
   },
 }
