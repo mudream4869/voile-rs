@@ -42,15 +42,17 @@
               <v-col cols="3"> 標籤 </v-col>
               <v-col cols="9"> {{ detail.book.tags }} </v-col>
               <v-col cols="3"> 新增日期 </v-col>
-              <v-col cols="9"> 2023/02/02 19:00:00 </v-col>
+              <v-col cols="9"> {{ detail.book.created_time }} </v-col>
               <v-col cols="3"> 編輯日期 </v-col>
-              <v-col cols="9"> 2023/02/02 19:00:00 </v-col>
+              <v-col cols="9"> {{ detail.book.modified_time }} </v-col>
               <v-col cols="3"> 網頁觀看位置 </v-col>
-              <v-col cols="9"> <a href="/aaa">aaa</a> </v-col>
+              <v-col cols="9">
+                <v-btn :to="{ name: 'book', params: { book_id: detail.book.book_id } }">Go</v-btn>
+              </v-col>
               <v-col cols="3"> 實際資料夾位置 </v-col>
-              <v-col cols="9"> C:/aaa </v-col>
+              <v-col cols="9"> {{ detail.book.local_path }} </v-col>
               <v-col cols="3"> 實際檔案 </v-col>
-              <v-col cols="9"> [ "png", "txt" ] </v-col>
+              <v-col cols="9"> {{ detail.book.content_titles }} </v-col>
             </v-row>
           </v-card-text>
         </v-card>

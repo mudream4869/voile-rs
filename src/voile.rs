@@ -96,11 +96,17 @@ impl BookDetails {
 pub struct Book {
     pub book_id: String,
     pub title: String,
+
     pub author: Option<String>,
     pub tags: Option<Vec<String>>,
     pub content_titles: Vec<String>,
     pub book_cover: Option<String>,
     pub book_type: Option<String>,
+
+    // Fixed info
+    pub created_timestamp: u64,
+    pub modified_timestamp: u64,
+    pub local_path: String,
 }
 
 impl Book {
@@ -260,8 +266,14 @@ impl Voile {
         let full_dir: std::path::PathBuf =
             [self.books_dir.as_str(), book_id.as_str()].iter().collect();
 
+        let default_created_time = std::fs::metadata(full_dir.clone())?
+            .created()?
+            .duration_since(std::time::SystemTime::UNIX_EPOCH)?
+            .as_secs();
+        let mut default_modified_time = default_created_time;
+
         let mut content_titles = vec![];
-        for path in std::fs::read_dir(full_dir)? {
+        for path in std::fs::read_dir(full_dir.clone())? {
             let entry = path?;
 
             if !entry.file_type()?.is_file() {
@@ -271,6 +283,11 @@ impl Voile {
             let title = String::from_str(entry.file_name().to_str().unwrap())?;
 
             if title == "details.json" {
+                default_modified_time = entry
+                    .metadata()?
+                    .modified()?
+                    .duration_since(std::time::SystemTime::UNIX_EPOCH)?
+                    .as_secs();
                 continue;
             } else if title.starts_with('.') {
                 // hidden files
@@ -282,6 +299,8 @@ impl Voile {
 
         content_titles.sort();
 
+        let local_path = std::fs::canonicalize(full_dir.clone())?;
+
         let mut book = Book {
             book_id: book_id.clone(),
             title: book_id.clone(),
@@ -290,6 +309,10 @@ impl Voile {
             tags: None,
             book_cover: None,
             book_type: None,
+
+            created_timestamp: default_created_time,
+            modified_timestamp: default_modified_time,
+            local_path: String::from(local_path.to_string_lossy()),
         };
 
         // details.json is optional

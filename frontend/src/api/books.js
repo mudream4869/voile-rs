@@ -20,6 +20,8 @@ export async function getAllTypes() {
 export async function getAllBooks() {
     return (await (await fetch('/api/books')).json()).books.map(book => {
         book.tags_set = new Set(book.tags || [])
+        book.created_time = new Date(book.created_timestamp * 1e3).toISOString()
+        book.modified_time = new Date(book.modified_timestamp * 1e3).toISOString()
         return book
     })
 }
