@@ -338,6 +338,21 @@ impl Voile {
         Ok(book)
     }
 
+    pub fn delete_book(&mut self, book_id: String) -> Result<()> {
+        if self.book_cache.get(&book_id).is_none() {
+            return Ok(());
+        }
+
+        let full_dir: std::path::PathBuf =
+            [self.books_dir.as_str(), book_id.as_str()].iter().collect();
+
+        std::fs::remove_dir_all(full_dir)?;
+
+        self.book_cache.remove(&book_id);
+
+        Ok(())
+    }
+
     pub async fn add_book(&self, field: actix_multipart::Field) -> Result<()> {
         // TODO: refine error
 

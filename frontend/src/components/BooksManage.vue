@@ -13,12 +13,24 @@
         </v-col>
 
         <v-col cols="3">
-          <v-btn :disabled="selected_bookids.length == 0" variant="outlined" color="red"> 刪除 </v-btn>
+          <v-btn :disabled="selected_bookids.length == 0" v-on:click="delete_alert_show = true" variant="outlined"
+            color="red"> 刪除 </v-btn>
           <v-btn :disabled="selected_bookids.length == 0" v-on:click="toggleChangeType()" variant="outlined" color="blue">
             修改類別 </v-btn>
         </v-col>
 
       </v-row>
+      <v-dialog transition="dialog-top-transition" width="auto" v-model="delete_alert_show">
+        <v-card>
+          <v-card-title> 刪除 {{ selected_bookids.length }} 本書 </v-card-title>
+          <v-card-text>
+            確認刪除 {{ selected_bookids.length }} 本書？
+            警告：此操作將無法被還原。
+            <v-btn v-on:click="deleteBooks()" color="red"> 確認 </v-btn>
+            <v-btn v-on:click="delete_alert_show = false"> 取消 </v-btn>
+          </v-card-text>
+        </v-card>
+      </v-dialog>
       <v-dialog transition="dialog-top-transition" width="auto" v-model="change_type.show">
         <v-card>
           <v-card-title> 修改 {{ selected_bookids.length }} 本書的類別 </v-card-title>
@@ -103,7 +115,7 @@
 </template>
 
 <script>
-import { getAllTags } from '@/api/books'
+import { deleteBook, getAllTags } from '@/api/books'
 import { updateBookDetail } from '@/api/books'
 import { getAllTypes } from '@/api/books'
 import { getAllBooks } from '@/api/books'
@@ -129,6 +141,8 @@ export default {
         show: false,
         book_type: '',
       },
+
+      delete_alert_show: false,
     }
   },
   created() {
@@ -207,6 +221,22 @@ export default {
       this.selected_bookids = []
       this.change_type.book_type = ''
     },
+    deleteBooks() {
+      this.delete_alert_show = false;
+      if (this.selected_bookids.length == 0) {
+        return
+      }
+
+      this.selected_bookids.forEach(book_id => {
+        deleteBook(book_id)
+      })
+
+      this.books = this.books.filter(book => {
+        return (this.selected_bookids.indexOf(book.book_id) == -1);
+      })
+
+      this.selected_bookids = []
+    }
   },
 }
 </script>

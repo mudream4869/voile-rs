@@ -1,7 +1,7 @@
 pub mod user;
 pub mod voile;
 
-use actix_web::{get, post, web, Responder};
+use actix_web::{delete, get, post, web, Responder};
 use futures_util::StreamExt as _;
 use futures_util::TryStreamExt;
 
@@ -97,6 +97,18 @@ async fn get_book(
     let book = data.voile.lock().unwrap().get_book(book_id)?;
 
     Ok(web::Json(book))
+}
+
+#[delete("/api/books/{book_id}")]
+async fn delete_book(
+    path: web::Path<String>,
+    data: web::Data<AppState>,
+) -> actix_web::Result<actix_web::HttpResponse> {
+    let book_id = path.into_inner();
+
+    data.voile.lock().unwrap().delete_book(book_id)?;
+
+    Ok(actix_web::HttpResponse::Ok().into())
 }
 
 #[post("/api/books")]
@@ -308,6 +320,7 @@ async fn app(conf: Config) -> std::io::Result<()> {
             .service(get_books_types)
             .service(get_book)
             .service(add_book)
+            .service(delete_book)
             .service(get_book_cover)
             .service(set_book_detail)
             .service(get_book_content)
