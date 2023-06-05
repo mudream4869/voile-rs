@@ -25,7 +25,7 @@ pub fn configure(cfg: &mut web::ServiceConfig, frontend_dir: String) {
         frontend_dir: frontend_dir.clone(),
     };
 
-    cfg.app_data(user_frontend)
+    cfg.app_data(web::Data::new(user_frontend))
         .service(index)
         .service(favicon)
         .service(actix_files::Files::new("/assets", assets_path).show_files_listing());
