@@ -3,7 +3,6 @@ pub mod voile;
 
 use actix_web::{delete, get, post, web, Responder};
 use futures_util::StreamExt as _;
-use futures_util::TryStreamExt;
 
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
@@ -11,7 +10,6 @@ use std::sync::{Arc, Mutex};
 #[derive(Clone)]
 struct AppState {
     voile: Arc<Mutex<voile::voile::Voile>>,
-    user_config: Arc<Mutex<voile::user::User>>,
 }
 
 #[derive(Serialize)]
@@ -121,48 +119,6 @@ async fn get_book_content(
     Ok(actix_files::NamedFile::open(content_path)?)
 }
 
-#[get("/api/user/config")]
-async fn get_user_config(data: web::Data<AppState>) -> actix_web::Result<impl Responder> {
-    Ok(web::Json(
-        data.user_config.lock().unwrap().get_user_config(),
-    ))
-}
-
-#[post("/api/user/config")]
-async fn set_user_config(
-    data: web::Data<AppState>,
-    user_config: web::Json<voile::user::UserConfig>,
-) -> actix_web::Result<actix_web::HttpResponse> {
-    data.user_config
-        .lock()
-        .unwrap()
-        .set_user_config(user_config.0)?;
-    Ok(actix_web::HttpResponse::Ok().into())
-}
-
-#[get("/api/user/avatar")]
-async fn get_user_avatar(data: web::Data<AppState>) -> actix_web::Result<impl Responder> {
-    Ok(actix_files::NamedFile::open(
-        data.user_config.lock().unwrap().get_user_avatar_path(),
-    )?)
-}
-
-#[post("/api/user/avatar")]
-async fn set_user_avatar(
-    mut payload: actix_multipart::Multipart,
-    data: web::Data<AppState>,
-) -> actix_web::Result<actix_web::HttpResponse> {
-    if let Some(field) = payload.try_next().await? {
-        data.user_config
-            .lock()
-            .unwrap()
-            .set_user_avatar(field)
-            .await?;
-    }
-
-    Ok(actix_web::HttpResponse::Ok().into())
-}
-
 #[get("/api/user/book_proc/{book_id}")]
 async fn get_book_proc(
     path: web::Path<String>,
@@ -255,7 +211,6 @@ async fn app(conf: Config) -> std::io::Result<()> {
         voile: Arc::new(Mutex::new(
             voile::voile::Voile::new(conf.data_dir.clone()).unwrap(),
         )),
-        user_config: Arc::new(Mutex::new(voile::user::User::new(server_data_dir.clone()))),
     };
 
     log::info!("Listen on: http://{}:{}", conf.ip.clone(), conf.port);
@@ -273,12 +228,9 @@ async fn app(conf: Config) -> std::io::Result<()> {
             .service(get_book_cover)
             .service(set_book_detail)
             .service(get_book_content)
-            .service(get_user_avatar)
-            .service(set_user_avatar)
-            .service(get_user_config)
-            .service(set_user_config)
             .service(get_book_proc)
-            .service(set_book_proc);
+            .service(set_book_proc)
+            .configure(|s| routes::user::configure(s, server_data_dir.clone()));
 
         match conf.frontend_dir.as_ref() {
             Some(frontend_dir) => app
