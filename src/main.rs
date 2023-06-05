@@ -12,25 +12,6 @@ use std::sync::{Arc, Mutex};
 struct AppState {
     voile: Arc<Mutex<voile::voile::Voile>>,
     user_config: Arc<Mutex<voile::user::User>>,
-    frontend_dir: Option<String>,
-}
-
-#[actix_web::get("/")]
-async fn index(data: web::Data<AppState>) -> std::io::Result<actix_files::NamedFile> {
-    let index_path: std::path::PathBuf =
-        [data.frontend_dir.as_ref().unwrap().as_str(), "index.html"]
-            .iter()
-            .collect();
-    Ok(actix_files::NamedFile::open(index_path)?)
-}
-
-#[actix_web::get("/favicon.ico")]
-async fn favicon(data: web::Data<AppState>) -> std::io::Result<actix_files::NamedFile> {
-    let favicon_path: std::path::PathBuf =
-        [data.frontend_dir.as_ref().unwrap().as_str(), "favicon.ico"]
-            .iter()
-            .collect();
-    Ok(actix_files::NamedFile::open(favicon_path)?)
 }
 
 #[derive(Serialize)]
@@ -275,7 +256,6 @@ async fn app(conf: Config) -> std::io::Result<()> {
             voile::voile::Voile::new(conf.data_dir.clone()).unwrap(),
         )),
         user_config: Arc::new(Mutex::new(voile::user::User::new(server_data_dir.clone()))),
-        frontend_dir: conf.frontend_dir.clone(),
     };
 
     log::info!("Listen on: http://{}:{}", conf.ip.clone(), conf.port);
@@ -301,13 +281,8 @@ async fn app(conf: Config) -> std::io::Result<()> {
             .service(set_book_proc);
 
         match conf.frontend_dir.as_ref() {
-            Some(frontend_dir) => {
-                let assets_path: std::path::PathBuf =
-                    [frontend_dir.as_str(), "assets"].iter().collect();
-                app.service(index)
-                    .service(favicon)
-                    .service(actix_files::Files::new("/assets", assets_path).show_files_listing())
-            }
+            Some(frontend_dir) => app
+                .configure(|s| routes::userdefine_frontend::configure(s, frontend_dir.to_string())),
             None => app.configure(routes::default_frontend::configure),
         }
     })
