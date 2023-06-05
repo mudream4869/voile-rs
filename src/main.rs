@@ -1,4 +1,4 @@
-pub mod user;
+pub mod routes;
 pub mod voile;
 
 use actix_web::{delete, get, post, web, Responder};
@@ -8,42 +8,11 @@ use futures_util::TryStreamExt;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 
-use rust_embed::RustEmbed;
-
-#[derive(RustEmbed)]
-#[folder = "frontend/dist"]
-struct DefaultServerAsset;
-
-fn handle_default_embedded_file(path: &str) -> actix_web::HttpResponse {
-    println!("{}", path);
-    match DefaultServerAsset::get(path) {
-        Some(content) => actix_web::HttpResponse::Ok()
-            .content_type(mime_guess::from_path(path).first_or_octet_stream().as_ref())
-            .body(content.data.into_owned()),
-        None => actix_web::HttpResponse::NotFound().body("404 Not Found"),
-    }
-}
-
 #[derive(Clone)]
 struct AppState {
-    voile: Arc<Mutex<voile::Voile>>,
-    user_config: Arc<Mutex<user::User>>,
+    voile: Arc<Mutex<voile::voile::Voile>>,
+    user_config: Arc<Mutex<voile::user::User>>,
     frontend_dir: Option<String>,
-}
-
-#[actix_web::get("/")]
-async fn default_index() -> impl Responder {
-    handle_default_embedded_file("index.html")
-}
-
-#[actix_web::get("/favicon.ico")]
-async fn default_favicon() -> impl Responder {
-    handle_default_embedded_file("favicon.ico")
-}
-
-#[actix_web::get("/assets/{_:.*}")]
-async fn default_assets(path: web::Path<String>) -> impl Responder {
-    handle_default_embedded_file(format!("assets/{}", path).as_str())
 }
 
 #[actix_web::get("/")]
@@ -66,7 +35,7 @@ async fn favicon(data: web::Data<AppState>) -> std::io::Result<actix_files::Name
 
 #[derive(Serialize)]
 struct RespBooks {
-    books: Vec<voile::Book>,
+    books: Vec<voile::voile::Book>,
 }
 
 #[get("/api/books")]
@@ -143,7 +112,7 @@ async fn get_book_cover(
 async fn set_book_detail(
     path: web::Path<String>,
     data: web::Data<AppState>,
-    book_detail: web::Json<voile::BookDetails>,
+    book_detail: web::Json<voile::voile::BookDetails>,
 ) -> actix_web::Result<actix_web::HttpResponse> {
     let book_id = path.into_inner();
 
@@ -181,7 +150,7 @@ async fn get_user_config(data: web::Data<AppState>) -> actix_web::Result<impl Re
 #[post("/api/user/config")]
 async fn set_user_config(
     data: web::Data<AppState>,
-    user_config: web::Json<user::UserConfig>,
+    user_config: web::Json<voile::user::UserConfig>,
 ) -> actix_web::Result<actix_web::HttpResponse> {
     data.user_config
         .lock()
@@ -229,7 +198,7 @@ async fn get_book_proc(
 async fn set_book_proc(
     path: web::Path<String>,
     data: web::Data<AppState>,
-    book_proc: web::Json<voile::BookProc>,
+    book_proc: web::Json<voile::voile::BookProc>,
 ) -> actix_web::Result<impl Responder> {
     // TODO: error handling
     let book_id = path.into_inner();
@@ -303,9 +272,9 @@ async fn app(conf: Config) -> std::io::Result<()> {
 
     let data = AppState {
         voile: Arc::new(Mutex::new(
-            voile::Voile::new(conf.data_dir.clone()).unwrap(),
+            voile::voile::Voile::new(conf.data_dir.clone()).unwrap(),
         )),
-        user_config: Arc::new(Mutex::new(user::User::new(server_data_dir.clone()))),
+        user_config: Arc::new(Mutex::new(voile::user::User::new(server_data_dir.clone()))),
         frontend_dir: conf.frontend_dir.clone(),
     };
 
@@ -339,10 +308,7 @@ async fn app(conf: Config) -> std::io::Result<()> {
                     .service(favicon)
                     .service(actix_files::Files::new("/assets", assets_path).show_files_listing())
             }
-            None => app
-                .service(default_index)
-                .service(default_favicon)
-                .service(default_assets),
+            None => app.configure(routes::default_frontend::configure),
         }
     })
     .bind((conf.ip, conf.port))?

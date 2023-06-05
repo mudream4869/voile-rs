@@ -22,10 +22,6 @@ mime_guess = { version = "2" }
 zip = "0.6"
 tempfile = "3"
 
-[lib]
-name = "voile"
-path = "src/voile.rs"
-
 [[bin]]
 name = "app"
 path = "src/main.rs"
