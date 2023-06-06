@@ -1,8 +1,8 @@
 <template>
   <v-app>
     <v-form class="ma-md-2">
-      <v-file-input accept="text/*, application/zip" multiple :clearable="true" label="txt檔案/zip檔案" :key="fileInputKey"
-        @change="uploadBook($event)"></v-file-input>
+      <v-file-input accept="text/*, application/zip, application/pdf" multiple :clearable="true" label="txt檔案/zip檔案/pdf檔案"
+        :key="fileInputKey" @change="uploadBook($event)"></v-file-input>
     </v-form>
     <div class="ma-md-2">
       <v-alert color="success" closable text="上傳成功" v-model="alertSuccess"></v-alert>

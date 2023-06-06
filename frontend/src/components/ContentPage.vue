@@ -5,7 +5,8 @@
     <div v-if="is_text" class="ma-md-2" style="font-size: 40px;">
       <h1> {{ content_title }} </h1>
       <div v-if="paging_max > 1">
-        <v-pagination @update:modelValue="updatePaging" v-model="paging" :length="paging_max" :start="0">
+        <v-pagination @update:modelValue="updatePaging" v-model="paging" :length="paging_max" :start="0"
+          :total-visible="10">
         </v-pagination>
       </div>
 
@@ -14,22 +15,48 @@
       </span>
 
       <div v-if="paging_max > 1">
-        <v-pagination @update:modelValue="updatePaging" v-model="paging" :length="paging_max" :start="0">
+        <v-pagination @update:modelValue="updatePaging" v-model="paging" :length="paging_max" :start="0"
+          :total-visible="10">
         </v-pagination>
       </div>
     </div>
-    <div v-if="!is_text" class="mx-auto">
+    <div v-if="is_image" class="mx-auto">
       <img :src="content_src_url" />
       <!-- prefetch next image -->
       <img :src="next_content_src_url" hidden />
+    </div>
+    <div v-if="is_pdf" class="mx-auto">
+      <div v-if="paging_max > 1">
+        <v-pagination @update:modelValue="updatePaging" v-model="paging" :length="paging_max" :start="0"
+          :total-visible="10">
+        </v-pagination>
+      </div>
+      <vue-pdf-embed ref="pdfRef" :source="content_src_url" @rendered="handle_pdf_render" :page="paging + 1" />
     </div>
   </v-app>
 </template>
 
 <script>
+import VuePdfEmbed from 'vue-pdf-embed'
+
 import { useRoute } from 'vue-router'
 
+function is_text_suffix(filename) {
+  return filename.endsWith('.txt')
+}
+
+function is_image_suffix(filename) {
+  return filename.endsWith('.png') || filename.endsWith('.jpg') || filename.endsWith('.gif') || filename.endsWith('.jpeg')
+}
+
+function is_pdf_suffix(filename) {
+  return filename.endsWith('.pdf')
+}
+
 export default {
+  components: {
+    VuePdfEmbed
+  },
   data: () => {
     return {
       book: {
@@ -57,7 +84,19 @@ export default {
     },
     is_text() {
       if (this.book.content_titles.length > this.content_idx) {
-        return this.book.content_titles && this.book.content_titles[this.content_idx].endsWith('.txt')
+        return this.book.content_titles && is_text_suffix(this.book.content_titles[this.content_idx])
+      }
+      return false
+    },
+    is_image() {
+      if (this.book.content_titles.length > this.content_idx) {
+        return this.book.content_titles && is_image_suffix(this.book.content_titles[this.content_idx])
+      }
+      return false
+    },
+    is_pdf() {
+      if (this.book.content_titles.length > this.content_idx) {
+        return this.book.content_titles && is_pdf_suffix(this.book.content_titles[this.content_idx])
       }
       return false
     },
@@ -193,6 +232,9 @@ export default {
         this.paging = 0
         this.UpdateContentIDX()
       }
+    },
+    handle_pdf_render() {
+      this.paging_max = this.$refs.pdfRef.pageCount
     },
   },
 }

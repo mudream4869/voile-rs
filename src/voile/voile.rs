@@ -360,6 +360,8 @@ impl Voile {
 
         if filename.ends_with(".txt") {
             return self.add_book_txt(field).await;
+        } else if filename.ends_with(".pdf") {
+            return self.add_book_pdf(field).await;
         } else if filename.ends_with(".zip") {
             return self.add_book_zip(field).await;
         }
@@ -389,6 +391,23 @@ impl Voile {
         let filename = field.content_disposition().get_filename().unwrap();
 
         let book_id = filename.strip_suffix(".txt").unwrap();
+
+        let folderpath: std::path::PathBuf = [self.books_dir.as_str(), book_id].iter().collect();
+
+        // prevent same folder_name
+        std::fs::create_dir(folderpath)?;
+
+        let filepath: std::path::PathBuf = [self.books_dir.as_str(), book_id, filename]
+            .iter()
+            .collect();
+
+        self.download_file_from_multipart(field, filepath).await
+    }
+
+    async fn add_book_pdf(&self, field: actix_multipart::Field) -> Result<()> {
+        let filename = field.content_disposition().get_filename().unwrap();
+
+        let book_id = filename.strip_suffix(".pdf").unwrap();
 
         let folderpath: std::path::PathBuf = [self.books_dir.as_str(), book_id].iter().collect();
 
