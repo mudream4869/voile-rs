@@ -60,10 +60,10 @@ cargo run configs/voile.toml
 - [ ] Easy configuration
 - [x] Use rust-embed to embed prebuild frontend
 - [ ] Search
-- [ ] Tag Filter
-- [ ] Add zip
+- [x] Tag Filter
+- [x] Add zip
 - [ ] Upload book cover
-- [ ] PDF Book
+- [x] PDF Book
 - [ ] i18n
 
 ## License
