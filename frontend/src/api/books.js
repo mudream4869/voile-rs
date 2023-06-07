@@ -36,3 +36,35 @@ export async function deleteBook(book_id) {
         method: 'DELETE',
     })
 }
+
+export async function setBookProc(book_id, content_idx, paging) {
+    await fetch(`/api/user/book_proc/${book_id}`, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            content_idx: content_idx,
+            paging: paging,
+        }),
+    })
+}
+
+export async function getBookProc(book_id) {
+    let res = await fetch(`/api/user/book_proc/${book_id}`)
+    if (res.status == 200) {
+        return await res.json()
+    }
+}
+
+export function getContentURL(book_id, content_idx) {
+    return `/api/books/${book_id}/contents/${content_idx}`
+}
+
+export function getBookCoverURL(book, height) {
+    if (book.book_cover) {
+        return `/api/books/${book.book_id}/book_cover`
+    }
+    return `https://via.placeholder.com/${height}`
+}

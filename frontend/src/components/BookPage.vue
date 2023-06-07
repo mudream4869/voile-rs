@@ -36,10 +36,7 @@
       </v-dialog>
       <v-row>
         <v-col cols="3">
-          <v-img v-if="book.book_cover" class="align-end text-white" :src="`/api/books/${book.book_id}/book_cover`"
-            height="200" cover>
-          </v-img>
-          <v-img v-else class="align-end text-white" src="https://via.placeholder.com/200" height="200" cover>
+          <v-img class="align-end text-white" :src="bookCoverURL" height="200" cover>
           </v-img>
         </v-col>
         <v-col cols="9">
@@ -78,7 +75,7 @@
 
 <script>
 import { useRoute } from 'vue-router'
-import { updateBookDetail, getBook, getAllTags, getAllTypes } from '@/api/books'
+import { updateBookDetail, getBook, getAllTags, getAllTypes, getBookProc, getBookCoverURL } from '@/api/books'
 
 export default {
   data: () => {
@@ -113,6 +110,9 @@ export default {
     this.fetchData()
   },
   computed: {
+    bookCoverURL() {
+      return getBookCoverURL(this.book, 200)
+    },
     breadcrumbsItems() {
       return [
         {
@@ -135,11 +135,11 @@ export default {
       this.book = await getBook(this.book_id)
       this.books_tags = await getAllTags()
       this.books_types = await getAllTypes()
-      fetch(`/api/user/book_proc/${this.book_id}`).then(async res => {
-        if (res.status == 200) {
-          this.book_proc = await res.json()
-        }
-      })
+
+      let book_proc = await getBookProc(this.book_id)
+      if (book_proc) {
+        this.book_proc = book_proc
+      }
     },
     async updateBookDetail() {
       await updateBookDetail(this.book_id, {

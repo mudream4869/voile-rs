@@ -10,8 +10,7 @@
       <v-row dense>
         <v-col v-for="book in show_books" :key="book.book_id" :cols="3">
           <v-card outlined shaped class="mx-auto ma-md-2">
-            <v-img v-if="book.book_cover" class="align-end text-white" height="400"
-              :src="`/api/books/${book.book_id}/book_cover`" cover>
+            <v-img class="align-end text-white" height="400" :src="getBookCoverURL(book, 400)" cover>
             </v-img>
             <v-card-title>
               {{ book.title }}
@@ -36,6 +35,7 @@
 <script>
 import { useRoute } from 'vue-router'
 import { getAllBooks } from '@/api/books'
+import { getBookCoverURL } from '@/api/books'
 
 export default {
   data: () => {
@@ -83,6 +83,7 @@ export default {
     }
   },
   methods: {
+    getBookCoverURL,
     async fetchData() {
       this.books = await getAllBooks()
       this.tags = [...new Set(this.books.map(book => book.tags || []).flat())]

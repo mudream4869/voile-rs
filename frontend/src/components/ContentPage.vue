@@ -37,6 +37,7 @@
 </template>
 
 <script>
+import { getBook, setBookProc, getContentURL } from '@/api/books'
 import VuePdfEmbed from 'vue-pdf-embed'
 
 import { useRoute } from 'vue-router'
@@ -101,10 +102,10 @@ export default {
       return false
     },
     content_src_url() {
-      return `/api/books/${this.book_id}/contents/${this.content_idx}`
+      return getContentURL(this.book_id, this.content_idx)
     },
     next_content_src_url() {
-      return `/api/books/${this.book_id}/contents/${this.content_idx + 1}`
+      return getContentURL(this.book_id, this.content_idx + 1)
     },
     breadcrumbsItems() {
       return [
@@ -145,7 +146,8 @@ export default {
 
     // fetch on init
     this.fetchBook()
-    this.setBookProc()
+
+    setBookProc(this.book_id, this.content_idx, this.paging)
   },
   updated() {
     const new_content_idx = parseInt(this.$route.params.content_idx);
@@ -155,21 +157,8 @@ export default {
     }
   },
   methods: {
-    async setBookProc() {
-      await fetch(`/api/user/book_proc/${this.book_id}`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content_idx: this.content_idx,
-          paging: this.paging,
-        }),
-      })
-    },
     async fetchBook() {
-      this.book = (await (await fetch(`/api/books/${this.book_id}`)).json())
+      this.book = await getBook(this.book_id)
       if (this.is_text) {
         this.content = (await (await fetch(this.content_src_url)).text())
         this.content_lines = this.content.split('\n')
@@ -188,7 +177,7 @@ export default {
           paging: this.paging,
         }
       })
-      this.setBookProc()
+      setBookProc(this.book_id, this.content_idx, this.paging)
     },
     async UpdateContentIDX() {
       if (this.is_text) {
@@ -206,7 +195,7 @@ export default {
         }
       })
 
-      this.setBookProc()
+      setBookProc(this.book_id, this.content_idx, this.paging)
     },
     previous_content() {
       if (this.paging > 0) {
