@@ -1210,6 +1210,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "26072860ba924cbfa98ea39c8c19b4dd6a4a25423dbdf219c1eca91aa0cf6964"
 
 [[package]]
+name = "powershell_script"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "232c43ca4a2aec888dbdcf0167ad05c228692624d5b75b0a775ef4065ca8b03e"
+
+[[package]]
 name = "ppv-lite86"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1761,6 +1767,7 @@ dependencies = [
  "home",
  "log",
  "mime_guess",
+ "powershell_script",
  "rust-embed",
  "serde",
  "serde_json",

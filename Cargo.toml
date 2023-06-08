@@ -22,6 +22,9 @@ mime_guess = { version = "2" }
 zip = "0.6"
 tempfile = "3"
 
+[build-dependencies]
+powershell_script = "0.1.2"
+
 [[bin]]
 name = "app"
 path = "src/main.rs"

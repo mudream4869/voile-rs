@@ -30,29 +30,10 @@ Voile is a app designed for personal book reading that supports various file for
 * Crawler
 * Native GUI
 
-## How to build and run
-
-(WIP)
-
-Since the GUI is provided by web page, we should build frontend first.
-
-### Build frontend
-
-```bash
-cd frontend
-yarn build
-```
-
-### Build backend
+## How to build
 
 ```bash
 cargo build
-```
-
-### Start
-
-```bash
-cargo run configs/voile.toml
 ```
 
 ## TODO
