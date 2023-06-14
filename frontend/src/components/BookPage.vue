@@ -3,37 +3,6 @@
     <v-breadcrumbs divider="-" :items="breadcrumbsItems">
     </v-breadcrumbs>
     <v-container class="ma-md-2">
-      <v-dialog v-model="edit_dialog">
-        <v-card>
-          <v-card-title>
-            <span class="text-h5"> 編輯 {{ book.title }} </span>
-          </v-card-title>
-          <v-card-text>
-            <v-container fluid>
-              <v-row>
-                <v-col cols="12">
-                  <v-text-field label="標題" required v-model="book.title"></v-text-field>
-                  <v-text-field label="作者" v-model="book.author"></v-text-field>
-                  <v-autocomplete label="分類" v-model="book.book_type" :items="books_types"></v-autocomplete>
-                </v-col>
-                <v-col cols="12">
-                  <v-chip-group>
-                    <v-chip v-for="(tag, i) in book.tags" :key="tag" @click="book.tags.splice(i, 1)"> {{ tag }} </v-chip>
-                    <v-autocomplete density="compact" variant="solo" append-inner-icon="mdi-plus" label="想要新增的標籤"
-                      single-line hide-details v-model="input_tag" :items="books_tags"
-                      @click:append-inner="addTag"></v-autocomplete>
-                  </v-chip-group>
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn color="primary" @click="edit_dialog = false; updateBookDetail();">確認修改</v-btn>
-            <v-btn color="warning" @click="edit_dialog = false">取消</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
       <v-row>
         <v-col cols="3">
           <v-img class="align-end text-white" :src="bookCoverURL" height="200" cover>
@@ -42,7 +11,6 @@
         <v-col cols="9">
           <h1>
             {{ book.title }}
-            <v-btn variant="tonal" size="small" @click="edit_dialog = true"><v-icon>mdi-pencil</v-icon> 編輯</v-btn>
           </h1>
 
           <div v-if="book.tags">
@@ -60,6 +28,11 @@
             :to="{ name: 'content', params: { book_id, content_idx: 0, paging: 0 } }">
             開始閱讀
           </v-btn>
+          <p class="my-2">
+            <v-btn variant="tonal" size="small" :to="{ name: 'edit_book', params: { book_id } }">
+              <v-icon>mdi-pencil</v-icon>編輯
+            </v-btn>
+          </p>
         </v-col>
       </v-row>
       <v-row>
@@ -75,7 +48,7 @@
 
 <script>
 import { useRoute } from 'vue-router'
-import { updateBookDetail, getBook, getAllTags, getAllTypes, getBookProc, getBookCoverURL } from '@/api/books'
+import { getBook, getBookProc, getBookCoverURL } from '@/api/books'
 
 export default {
   data: () => {
@@ -88,18 +61,11 @@ export default {
         book_type: null,
       },
 
-      books_tags: [],
-      books_types: [],
-
       book_id: '',
       book_proc: {
         content_idx: -1,
         paging: 0,
       },
-
-      edit_dialog: false,
-
-      input_tag: '',
     }
   },
   created() {
@@ -133,30 +99,12 @@ export default {
   methods: {
     async fetchData() {
       this.book = await getBook(this.book_id)
-      this.books_tags = await getAllTags()
-      this.books_types = await getAllTypes()
 
       let book_proc = await getBookProc(this.book_id)
       if (book_proc) {
         this.book_proc = book_proc
       }
     },
-    async updateBookDetail() {
-      await updateBookDetail(this.book_id, {
-        title: this.book.title,
-        author: this.book.author,
-        tags: this.book.tags,
-        book_type: this.book.book_type,
-      })
-    },
-    addTag() {
-      if (this.book.tags) {
-        this.book.tags.push(this.input_tag);
-      } else {
-        this.book.tags = [this.input_tag];
-      }
-      this.input_tag = '';
-    }
   },
 }
 </script>
