@@ -7,16 +7,11 @@
         </v-col>
         <v-col v-for="book in random_books" :key="book.book_id" :cols="3">
           <v-card outlined shaped class="mx-auto ma-md-2">
-            <v-img v-if="book.book_cover" class="align-end text-white" height="400"
-              :src="`/api/books/${book.book_id}/book_cover`" cover>
+            <v-img v-if="book.book_cover" class="align-end text-white" height="400" :src="bookCoverURL(book)" cover>
             </v-img>
             <v-card-title>
               {{ book.title }}
             </v-card-title>
-
-            <div v-if="book.tags">
-              <v-chip class="ma-2" label v-for="tag in book.tags" :key="tag"> {{ tag }} </v-chip>
-            </div>
 
             <v-card-actions>
               <v-btn outlined :to="{ name: 'book', params: { book_id: book.book_id } }">
@@ -39,10 +34,6 @@
               {{ book.title }}
             </v-card-title>
 
-            <div v-if="book.tags">
-              <v-chip class="ma-2" label v-for="tag in book.tags" :key="tag"> {{ tag }} </v-chip>
-            </div>
-
             <v-card-actions>
               <v-btn outlined :to="{ name: 'book', params: { book_id: book.book_id } }">
                 閱讀
@@ -56,7 +47,7 @@
 </template>
 
 <script>
-import { getAllBooks } from '@/api/books'
+import { getAllBooks, getBookCoverURL } from '@/api/books'
 
 export default {
   data: () => {
@@ -71,6 +62,9 @@ export default {
     this.fetchData()
   },
   methods: {
+    bookCoverURL(book) {
+      return getBookCoverURL(book, 400)
+    },
     async fetchData() {
       this.books = await getAllBooks()
       this.books.forEach(book => {

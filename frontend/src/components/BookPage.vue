@@ -5,7 +5,7 @@
     <v-container class="ma-md-2">
       <v-row>
         <v-col cols="3">
-          <v-img class="align-end text-white" :src="bookCoverURL" height="200" cover>
+          <v-img class="align-end text-white" :src="bookCoverURL" height="400" cover>
           </v-img>
         </v-col>
         <v-col cols="9">
@@ -77,7 +77,7 @@ export default {
   },
   computed: {
     bookCoverURL() {
-      return getBookCoverURL(this.book, 200)
+      return getBookCoverURL(this.book, 400)
     },
     breadcrumbsItems() {
       return [
