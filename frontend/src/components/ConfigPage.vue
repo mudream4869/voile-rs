@@ -35,6 +35,7 @@
 </template>
 
 <script>
+import { uploadAvatar, updateUserConfig, getUserConfig } from '@/api/users';
 import { useTheme } from 'vuetify'
 
 export default {
@@ -60,30 +61,17 @@ export default {
   methods: {
     uploadAvatar(event) {
       const avatar_file = event.target.files[0];
-      const formData = new FormData();
-      formData.append('avatar', avatar_file, avatar_file.name);
-      fetch(`/api/user/avatar`, {
-        method: 'POST',
-        body: formData,
-      })
+      uploadAvatar(avatar_file);
     },
 
     async updateUserConfig(value) {
       this.user_config.theme = value
-      await fetch(`/api/user/config`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(this.user_config),
-      })
-
+      await updateUserConfig(this.user_config)
       this.theme.global.name.value = this.user_config.theme
     },
 
     async fetchUserConfig() {
-      this.user_config = (await (await fetch(`/api/user/config`)).json())
+      this.user_config = await getUserConfig()
       this.theme.global.name.value = this.user_config.theme
     },
   },

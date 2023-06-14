@@ -9,9 +9,8 @@
       <v-alert color="warning" closable text="上傳失敗" v-model="alertFail"></v-alert>
       <h2> 可上傳檔案格式 </h2>
       <h3> txt 檔案 </h3>
-      <p> 通常會是小說類型 </p>
       <h3> zip 檔案 </h3>
-      <p> 通常會是漫畫類型 </p>
+      <h3> pdf 檔案 </h3>
     </div>
   </v-app>
 </template>

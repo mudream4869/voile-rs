@@ -40,6 +40,8 @@
 
 <script>
 import { useTheme } from 'vuetify'
+import { getUserConfig } from './api/users'
+import { getAllTypes } from './api/books'
 
 export default {
   data: () => ({
@@ -52,8 +54,8 @@ export default {
   }),
   methods: {
     async fetchUserConfig() {
-      this.user_config = (await (await fetch(`/api/user/config`)).json())
-      this.books_types = (await (await fetch(`/api/books_types`)).json())
+      this.user_config = await getUserConfig()
+      this.books_types = await getAllTypes()
       this.theme.global.name.value = this.user_config.theme
     },
   },
