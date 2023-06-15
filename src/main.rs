@@ -23,7 +23,7 @@ impl Config {
 }
 
 fn main() -> std::io::Result<()> {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
     let args: Vec<String> = std::env::args().collect();
 
     let mut config_filename: std::path::PathBuf;

@@ -14,7 +14,7 @@ export async function updateUserConfig(user_config) {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
         },
-        body: user_config,
+        body: JSON.stringify(user_config),
     })
 }
 

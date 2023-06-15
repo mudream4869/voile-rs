@@ -1,4 +1,5 @@
 fn main() {
+    println!("cargo:rerun-if-changed=./frontend");
     run_yarn_build();
 }
 
@@ -7,13 +8,16 @@ fn run_yarn_build() {
     cmd.stdout(std::process::Stdio::piped());
 
     cmd.current_dir("frontend");
-    cmd.args(["-c", "yarn build"]);
+    cmd.args(["-c", "yarn", "build"]);
 
-    cmd.output().unwrap();
+    let status = cmd.status().expect("fail execute yarn build frontend");
+    if !status.success() {
+        panic!("fail to yarn build: {:?}", cmd.output());
+    }
 }
 
 fn get_os_process() -> String {
-    if cfg!(target_os = "windows") {
+    if cfg!(windows) {
         String::from("powershell.exe")
     } else {
         String::from("/bin/bash")
