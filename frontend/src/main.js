@@ -16,6 +16,8 @@ import HomePage from './components/HomePage.vue'
 import ConfigPage from './components/ConfigPage.vue'
 import BooksManage from './components/BooksManage.vue'
 
+import MixtureReader from './views/MixtureReader.vue'
+
 // Composables
 import { createApp } from 'vue'
 
@@ -27,6 +29,11 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 
 const routes = [
   {
+    name: 'mixture_reader',
+    path: '/mixture_reader/:book_id/contents/:content_idx/:paging',
+    component: MixtureReader
+  },
+  {
     path: "/*",
     component: Layout,
     children: [
@@ -35,7 +42,6 @@ const routes = [
       { name: 'book', path: '/books/:book_id', component: BookPage },
       { name: 'edit_book', path: '/books/:book_id/edit', component: BookEdit },
       { name: 'add_book', path: '/add_book', component: AddBookPage },
-      { name: 'content', path: '/books/:book_id/contents/:content_idx/:paging', component: ContentPage },
       { path: '/config', component: ConfigPage },
       { name: 'books_manage', path: '/books_manage', component: BooksManage },
     ],
