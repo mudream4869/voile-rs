@@ -1,7 +1,5 @@
 <template>
   <v-app tabindex="0" @keyup.arrow-left="previous_content" @keyup.arrow-right="next_content">
-    <v-breadcrumbs divider="-" :items="breadcrumbsItems">
-    </v-breadcrumbs>
     <div v-if="is_text" class="ma-md-2" style="font-size: 40px;">
       <h1> {{ content_title }} </h1>
       <div v-if="paging_max > 1">
@@ -84,33 +82,6 @@ export default {
     },
     next_content_src_url() {
       return getContentURL(this.book_id, this.content_idx + 1)
-    },
-    breadcrumbsItems() {
-      return [
-        {
-          title: '書櫃',
-          link: true,
-          disabled: false,
-          to: {
-            name: 'books',
-          },
-        },
-        {
-          title: this.book.title,
-          link: true,
-          disabled: false,
-          to: {
-            name: 'book',
-            params: {
-              book_id: this.book_id,
-            },
-          },
-        },
-        {
-          title: this.content_title,
-          disabled: false,
-        },
-      ]
     },
     current_page_lines() {
       return Math.min((this.paging + 1) * this.paging_line, this.content_lines.length) - this.paging * this.paging_line
