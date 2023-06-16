@@ -20,14 +20,15 @@
           <p v-if="book.author"> 作者: {{ book.author }} </p>
 
           <v-btn variant="outlined" v-if="book_proc.content_idx >= 0" target="_blank"
-            :to="{ name: 'mixture_reader', params: { book_id, content_idx: book_proc.content_idx, paging: book_proc.paging } }">
+            :to="{ name: reader_name, params: { book_id, content_idx: book_proc.content_idx, paging: book_proc.paging } }">
             繼續閱讀: {{ book.content_titles[book_proc.content_idx] }}
           </v-btn>
 
           <v-btn variant="outlined" v-if="book_proc.content_idx == -1" target="_blank"
-            :to="{ name: 'mixture_reader', params: { book_id, content_idx: 0, paging: 0 } }">
+            :to="{ name: reader_name, params: { book_id, content_idx: 0, paging: 0 } }">
             開始閱讀
           </v-btn>
+
           <p class="my-2">
             <v-btn variant="tonal" size="small" :to="{ name: 'edit_book', params: { book_id } }">
               <v-icon>mdi-pencil</v-icon>編輯
@@ -35,7 +36,7 @@
           </p>
         </v-col>
       </v-row>
-      <v-row>
+      <v-row v-if="is_mixture_reader">
         <v-col cols="4" v-for="(c, idx) in book.content_titles" :key="idx">
           <v-btn variant="text" target="_blank"
             :to="{ name: 'mixture_reader', params: { book_id, content_idx: idx, paging: 0 } }">
@@ -96,6 +97,21 @@ export default {
         },
       ]
     },
+    reader_name() {
+      if (this.is_mixture_reader) {
+        return 'mixture_reader'
+      }
+      if (this.is_pdf_reader) {
+        return 'pdf_reader'
+      }
+      return 'mixture_reader'
+    },
+    is_mixture_reader() {
+      return !this.is_pdf_reader;
+    },
+    is_pdf_reader() {
+      return this.book.content_titles.length == 1 && this.book.content_titles[0].endsWith('.pdf')
+    }
   },
   methods: {
     async fetchData() {

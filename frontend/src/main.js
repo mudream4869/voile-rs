@@ -16,6 +16,7 @@ import ConfigPage from './components/ConfigPage.vue'
 import BooksManage from './components/BooksManage.vue'
 
 import MixtureReader from './views/MixtureReader.vue'
+import PDFReader from './views/PDFReader.vue'
 
 // Composables
 import { createApp } from 'vue'
@@ -31,6 +32,11 @@ const routes = [
     name: 'mixture_reader',
     path: '/mixture_reader/:book_id/contents/:content_idx/:paging',
     component: MixtureReader
+  },
+  {
+    name: 'pdf_reader',
+    path: '/pdf_reader/:book_id/contents/:content_idx/:paging',
+    component: PDFReader
   },
   {
     path: "/*",
