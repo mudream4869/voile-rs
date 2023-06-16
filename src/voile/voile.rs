@@ -271,6 +271,7 @@ impl Voile {
             .duration_since(std::time::SystemTime::UNIX_EPOCH)?
             .as_secs();
         let mut default_modified_time = default_created_time;
+        let mut default_book_cover: Option<String> = None;
 
         let mut content_titles = vec![];
         for path in std::fs::read_dir(full_dir.clone())? {
@@ -288,6 +289,9 @@ impl Voile {
                     .modified()?
                     .duration_since(std::time::SystemTime::UNIX_EPOCH)?
                     .as_secs();
+                continue;
+            } else if title == "book_cover.jpg" {
+                default_book_cover = Some(title);
                 continue;
             } else if title.starts_with('.') {
                 // hidden files
@@ -326,6 +330,12 @@ impl Voile {
         }
 
         if book.book_cover.is_none() {
+            if let Some(filename) = &default_book_cover {
+                if is_image(filename) {
+                    book.book_cover = Some(filename.clone());
+                }
+            }
+
             // Use first content as book_cover if it's an image file
             if let Some(filename) = book.content_titles.get(0) {
                 if is_image(filename) {
@@ -502,6 +512,21 @@ impl Voile {
         .collect();
 
         Ok(full_dir)
+    }
+
+    pub async fn set_book_cover(
+        &mut self,
+        book_id: String,
+        field: actix_multipart::Field,
+    ) -> Result<()> {
+        let filepath: std::path::PathBuf =
+            [self.books_dir.as_str(), book_id.as_str(), "book_cover.jpg"]
+                .iter()
+                .collect();
+
+        self.download_file_from_multipart(field, filepath).await?;
+
+        Ok(())
     }
 
     pub fn set_book_detail(&mut self, book_id: String, book_detail: BookDetails) -> Result<()> {

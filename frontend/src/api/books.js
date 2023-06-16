@@ -68,3 +68,12 @@ export function getBookCoverURL(book, height) {
     }
     return `https://via.placeholder.com/${height}`
 }
+
+export async function uploadBookCover(book_id, file) {
+    const formData = new FormData();
+    formData.append('avatar', file, file.name);
+    await fetch(`/api/books/${book_id}/book_cover`, {
+        method: 'POST',
+        body: formData,
+    })
+}

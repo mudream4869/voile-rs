@@ -1,5 +1,6 @@
 use actix_web::{delete, get, post, web, Responder};
 use futures_util::StreamExt as _;
+use futures_util::TryStreamExt;
 
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
@@ -82,6 +83,24 @@ async fn get_book_cover(
     Ok(actix_files::NamedFile::open(book_cover_path)?)
 }
 
+#[post("/api/books/{book_id}/book_cover")]
+async fn set_book_cover(
+    path: web::Path<String>,
+    mut payload: actix_multipart::Multipart,
+    data: web::Data<Voile>,
+) -> actix_web::Result<actix_web::HttpResponse> {
+    let book_id = path.into_inner();
+    if let Some(field) = payload.try_next().await? {
+        data.voile
+            .lock()
+            .unwrap()
+            .set_book_cover(book_id, field)
+            .await?;
+    }
+
+    Ok(actix_web::HttpResponse::Ok().into())
+}
+
 #[post("/api/books/{book_id}")]
 async fn set_book_detail(
     path: web::Path<String>,
@@ -158,6 +177,7 @@ pub fn configure(cfg: &mut web::ServiceConfig, data_dir: String) {
         .service(add_book)
         .service(delete_book)
         .service(get_book_cover)
+        .service(set_book_cover)
         .service(set_book_detail)
         .service(get_book_content)
         .service(get_book_proc)
