@@ -1,66 +1,47 @@
+use path_absolutize::Absolutize;
+
+pub mod config;
 pub mod routes;
 pub mod voile;
-
-use serde::Deserialize;
-
-#[derive(Deserialize)]
-struct Config {
-    ip: String,
-    port: u16,
-    data_dir: String,
-    frontend_dir: Option<String>,
-    server_data_dir: Option<String>,
-}
-
-impl Config {
-    pub fn from_filename<P: AsRef<std::path::Path>>(filename: P) -> std::io::Result<Config> {
-        log::info!("Config file: {}", filename.as_ref().display());
-
-        let detail_str = std::fs::read_to_string(filename)?;
-        let detail: Config = toml::from_str(detail_str.as_str())?;
-        Ok(detail)
-    }
-}
 
 fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
     let args: Vec<String> = std::env::args().collect();
 
-    let mut config_filename: std::path::PathBuf;
+    let mut voile_config_dir: std::path::PathBuf;
     let mut default_server_data_dir: std::path::PathBuf = std::env::current_dir()?;
     default_server_data_dir.push("data");
 
     if args.len() == 1 {
-        match home::home_dir() {
-            Some(home_dir) => {
-                config_filename = home_dir.clone();
-                config_filename.push(".voile");
-                config_filename.push("config.toml");
-
-                default_server_data_dir = home_dir.clone();
-                default_server_data_dir.push(".voile");
-                default_server_data_dir.push("data");
+        match dirs::config_dir() {
+            Some(config_dir) => {
+                voile_config_dir = config_dir.clone();
+                voile_config_dir.push("Voile");
             }
             None => {
                 return Err(std::io::Error::new(std::io::ErrorKind::Other, ""));
             }
         }
     } else if args.len() == 2 {
-        config_filename = [args[1].as_str()].iter().collect();
+        voile_config_dir = [args[1].as_str()].iter().collect();
     } else {
         return Err(std::io::Error::new(std::io::ErrorKind::Other, ""));
     }
 
-    let mut conf = Config::from_filename(&config_filename)?;
-    if conf.server_data_dir.is_none() {
-        conf.server_data_dir = Some(default_server_data_dir.to_str().unwrap().to_string());
-    }
-    app(conf)
+    let config_dir = std::path::Path::new(&voile_config_dir)
+        .absolutize()
+        .unwrap();
+
+    config::config::prepare_config_dir(std::path::PathBuf::from(config_dir.clone()))?;
+
+    log::info!("Config dir:{:?}", config_dir);
+
+    app(voile_config_dir)
 }
 
 #[actix_web::main]
-async fn app(conf: Config) -> std::io::Result<()> {
-    let server_data_dir = conf.server_data_dir.unwrap();
+async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
+    let conf = config::system_config::SystemConfig::from_dir(voile_config_dir.clone())?;
 
     log::info!("Listen on: http://{}:{}", conf.ip.clone(), conf.port);
 
@@ -68,12 +49,12 @@ async fn app(conf: Config) -> std::io::Result<()> {
         let app = actix_web::App::new()
             .wrap(actix_web::middleware::Logger::default())
             .configure(|s| routes::book::configure(s, conf.data_dir.clone()))
-            .configure(|s| routes::user::configure(s, server_data_dir.clone()));
+            .configure(|s| routes::config::configure(s, voile_config_dir.clone()));
 
-        match conf.frontend_dir.as_ref() {
-            Some(frontend_dir) => app
-                .configure(|s| routes::userdefine_frontend::configure(s, frontend_dir.to_string())),
-            None => app.configure(routes::default_frontend::configure),
+        if conf.frontend_dir.is_empty() {
+            app.configure(routes::default_frontend::configure)
+        } else {
+            app.configure(|s| routes::userdefine_frontend::configure(s, conf.frontend_dir.clone()))
         }
     })
     .bind((conf.ip, conf.port))?

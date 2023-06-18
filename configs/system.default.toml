@@ -1,0 +1,14 @@
+ip = "127.0.0.1"  # IP binding, default value: '127.0.0.1'
+port = 8080  # Port binding, default value: 8080
+
+# frontend_dir is the directory that stores ui's html file and assets
+# comment this to use default server from embedded file in single binary
+frontend_dir = ""
+
+# data_dir is the directory that stores books
+# Default data_dir = '[config_dir]/books'
+data_dir = ""
+
+# Default server_data_dir = '[config_dir]/server_data'
+# Uncomment and specify a custom server data directory if needed
+server_data_dir = ""

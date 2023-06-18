@@ -2,7 +2,7 @@
   <v-app>
     <v-navigation-drawer expand-on-hover rail>
       <v-list>
-        <v-list-item prepend-avatar="/api/user/avatar" :title="user_config.name ? user_config.name : '[未填名字]'"
+        <v-list-item prepend-avatar="/api/config/user/avatar" :title="user_config.name ? user_config.name : '[未填名字]'"
           :to="'/config'" value="user_config"></v-list-item>
       </v-list>
       <v-divider></v-divider>
@@ -36,7 +36,7 @@
 
 <script>
 import { useTheme } from 'vuetify'
-import { getUserConfig } from '@/api/users'
+import { getUserConfig } from '@/api/config'
 import { getAllTypes } from '@/api/books'
 
 export default {

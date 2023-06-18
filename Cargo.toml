@@ -21,9 +21,9 @@ rust-embed="6.6.1"
 mime_guess = { version = "2" }
 zip = "0.6"
 tempfile = "3"
-
-[build-dependencies]
-powershell_script = "0.1.2"
+dirs = "5.0"
+toml_edit = "0.19"
+path-absolutize = "3.1"
 
 [[bin]]
 name = "app"

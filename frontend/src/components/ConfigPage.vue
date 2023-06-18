@@ -1,13 +1,26 @@
 <template>
   <v-app>
     <v-expansion-panels>
+      <v-expansion-panel title="啟動參數">
+        <v-expansion-panel-text>
+          <v-form class="ma-md-2">
+            <v-text-field label="資料夾路徑" v-model="config_dir" disabled></v-text-field>
+          </v-form>
+        </v-expansion-panel-text>
+      </v-expansion-panel>
       <v-expansion-panel title="系統設定">
         <v-expansion-panel-text>
-          這裡這設定只能在設定檔案裡面調整然後重啟，才能生效。
           <v-form class="ma-md-2">
-            <v-text-field label="設定檔案" v-model="setting_filename" disabled></v-text-field>
-            <v-text-field label="本地儲存路徑" v-model="data_dir" disabled></v-text-field>
-            <v-text-field label="資料庫儲存路徑" v-model="db_filename" disabled></v-text-field>
+            <v-text-field label="監聽 IP" v-model="system_config.ip" disabled></v-text-field>
+          </v-form>
+          <v-form class="ma-md-2">
+            <v-text-field label="監聽 Port" v-model="system_config.port" disabled></v-text-field>
+          </v-form>
+          <v-form class="ma-md-2">
+            <v-text-field label="書籍資料夾" v-model="system_config.data_dir" disabled></v-text-field>
+          </v-form>
+          <v-form class="ma-md-2">
+            <v-text-field label="伺服器資料夾" v-model="system_config.server_data_dir" disabled></v-text-field>
           </v-form>
         </v-expansion-panel-text>
       </v-expansion-panel>
@@ -15,7 +28,7 @@
         <v-expansion-panel-text>
           <v-form class="ma-md-2">
             <v-text-field type="text" label="使用者名字" v-model="user_config.name" append-icon="mdi-send"
-              @click:append="updateUserConfig"></v-text-field>
+              @click:append="updateUserName"></v-text-field>
             <v-file-input :rules="avatar_rules" accept="image/png, image/jpeg" label="使用者頭像" show-size
               @change="uploadAvatar($event)"></v-file-input>
           </v-form>
@@ -24,7 +37,7 @@
       <v-expansion-panel title="使用者偏好">
         <v-expansion-panel-text>
           <v-form class="ma-md-2">
-            <v-select label="主題" :items="['light', 'dark']" @update:modelValue="updateUserConfig"
+            <v-select label="主題" :items="['light', 'dark']" @update:modelValue="updateUserTheme"
               v-model="user_config.theme"></v-select>
             <v-text-field label="小說字體大小"></v-text-field>
           </v-form>
@@ -35,15 +48,13 @@
 </template>
 
 <script>
-import { uploadAvatar, updateUserConfig, getUserConfig } from '@/api/users';
+import { uploadAvatar, updateUserConfig, getUserConfig, getSystemConfig } from '@/api/config';
 import { useTheme } from 'vuetify'
 
 export default {
   data: () => {
     return {
-      setting_filename: '~/.voile/config',
-      data_dir: '~/.voile/books',
-      db_filename: '~/.voile/db.sqlite',
+      config_dir: '~/.voile/config',
 
       avatar_rules: [
         value => {
@@ -56,6 +67,13 @@ export default {
         name: '',
         theme: 'light',
       },
+
+      system_config: {
+        ip: '127.0.0.1',
+        port: 8080,
+        data_dir: '',
+        server_data_dir: '',
+      },
     }
   },
   methods: {
@@ -64,14 +82,18 @@ export default {
       uploadAvatar(avatar_file);
     },
 
-    async updateUserConfig(value) {
-      this.user_config.theme = value
-      await updateUserConfig(this.user_config)
-      this.theme.global.name.value = this.user_config.theme
+    async updateUserName() {
+      await updateUserConfig({ name: this.user_config.name })
     },
 
-    async fetchUserConfig() {
+    async updateUserTheme(value) {
+      await updateUserConfig({ theme: value })
+      this.theme.global.name.value = value
+    },
+
+    async fetchConfig() {
       this.user_config = await getUserConfig()
+      this.system_config = await getSystemConfig()
       this.theme.global.name.value = this.user_config.theme
     },
   },
@@ -83,7 +105,7 @@ export default {
     }
   },
   created() {
-    this.fetchUserConfig()
+    this.fetchConfig()
   },
 }
 </script>

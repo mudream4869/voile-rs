@@ -1,0 +1,18 @@
+# The config in user part can be modified in GUI
+
+# theme can be dark/light
+# default: "light"
+theme = "light"
+
+# Display name
+name = "Admin"
+
+# Login username
+# default: "admin"
+username = "admin"
+
+# Login password
+# password_sha512 = sha521(password + password_salt)
+# leave empty to skip login page
+password_salt = ""
+password_sha512 = ""

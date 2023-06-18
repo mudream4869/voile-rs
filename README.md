@@ -35,6 +35,22 @@ Voile is a app designed for personal book reading that supports various file for
 cargo build
 ```
 
+## How to Run
+
+To run the program, you need to specify a settings directory. If you start the program without any arguments, it will use the default folder depending on your operating system:
+
+* Linux: `$HOME/.config/Voile/`
+* Windows: `%APPDATA%\Voile\`
+* macOS: `$HOME/Library/Application Support/Voile/`
+
+To start the program with a specific path to the configuration folder, you can run the following command:
+
+```bash
+./app [config_dir]
+```
+
+Replace `[config_dir]` with the desired path to the folder containing the configuration files. This allows you to override the default settings directory and specify a custom location for the configuration files.
+
 ## TODO
 
 - [ ] Easy configuration

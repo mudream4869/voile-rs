@@ -1,0 +1,69 @@
+use serde::{Deserialize, Serialize};
+
+pub fn default_system_config(voile_config_dir: std::path::PathBuf) -> std::io::Result<String> {
+    let default_toml = include_str!("../../configs/system.default.toml");
+    let mut doc: toml_edit::Document = default_toml.parse().unwrap();
+
+    let mut default_server_data_dir = voile_config_dir.clone();
+    default_server_data_dir.push("server_data");
+
+    let mut default_data_dir = voile_config_dir.clone();
+    default_data_dir.push("books");
+
+    doc["data_dir"] = toml_edit::value(default_data_dir.to_str().unwrap());
+    doc["server_data_dir"] = toml_edit::value(default_server_data_dir.to_str().unwrap());
+
+    Ok(doc.to_string())
+}
+
+fn default_port() -> u16 {
+    8080
+}
+
+fn default_ip() -> String {
+    "127.0.0.1".to_string()
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SystemConfig {
+    #[serde(default = "default_ip")]
+    pub ip: String,
+
+    #[serde(default = "default_port")]
+    pub port: u16,
+
+    #[serde(default)]
+    pub data_dir: String,
+
+    #[serde(default)]
+    pub frontend_dir: String,
+
+    #[serde(default)]
+    pub server_data_dir: String,
+}
+
+impl SystemConfig {
+    pub fn from_dir(voile_config_dir: std::path::PathBuf) -> std::io::Result<SystemConfig> {
+        let mut system_config_filename = voile_config_dir.clone();
+        system_config_filename.push("system.toml");
+
+        let mut default_server_data_dir = voile_config_dir.clone();
+        default_server_data_dir.push("server_data");
+
+        let mut default_data_dir = voile_config_dir.clone();
+        default_data_dir.push("books");
+
+        let detail_str = std::fs::read_to_string(system_config_filename)?;
+        let mut config: SystemConfig = toml::from_str(detail_str.as_str())?;
+
+        if config.server_data_dir.is_empty() {
+            config.server_data_dir = default_server_data_dir.to_str().unwrap().to_string();
+        }
+
+        if config.data_dir.is_empty() {
+            config.data_dir = default_data_dir.to_str().unwrap().to_string();
+        }
+
+        Ok(config)
+    }
+}
