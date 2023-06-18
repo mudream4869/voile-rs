@@ -7,18 +7,17 @@ Voile is a app designed for personal book reading that supports various file for
 ### Will Provide
 
 * Support books format:
-    * A folder of images
-    * A folder of txts
-    * One txt (Maybe large)
-    * pdf
-    * epub
+    * [x] A folder of images
+    * [x] A folder of txts
+    * [x] One txt (Maybe large)
+    * [x] pdf
+    * [ ] epub
 * Operations:
-    * Upload/Remove books
-    * Edit book information
-    * Group books into a series
-* Single-user login with password authentication.
-* Single binary executable.
-* A self-hosted server.
+    * [x] Upload/Remove books
+    * [x] Edit book information
+    * [ ] Group books into a series
+* [ ] Single-user login with password authentication.
+* [x] Single binary executable.
 
 ### **May (or may not 😝)** Provide
 
@@ -43,7 +42,7 @@ cargo build
 - [ ] Search
 - [x] Tag Filter
 - [x] Add zip
-- [ ] Upload book cover
+- [x] Upload book cover
 - [x] PDF Book
 - [ ] i18n
 
