@@ -34,7 +34,7 @@ export default {
         const avatar_file = event.target.files[i];
         formData.append('book', avatar_file, avatar_file.name);
       }
-      fetch(`/api/books`, {
+      fetch(`api/books`, {
         method: 'POST',
         body: formData,
       }).then(res => {

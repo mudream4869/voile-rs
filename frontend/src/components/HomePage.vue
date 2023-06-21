@@ -28,7 +28,7 @@
         <v-col v-for="book in recent_add_books" :key="book.book_id" :cols="3">
           <v-card outlined shaped class="mx-auto ma-md-2">
             <v-img v-if="book.book_cover" class="align-end text-white" height="400"
-              :src="`/api/books/${book.book_id}/book_cover`" cover>
+              :src="`api/books/${book.book_id}/book_cover`" cover>
             </v-img>
             <v-card-title>
               {{ book.title }}
