@@ -128,6 +128,8 @@ export default {
       this.book = await getBook(this.book_id)
       this.books_tags = await getAllTags()
       this.books_types = await getAllTypes()
+
+      document.title += ' | 編輯 ' + this.book.title
     },
     async updateBookDetail() {
       await updateBookDetail(this.book_id, {

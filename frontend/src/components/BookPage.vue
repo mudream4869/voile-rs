@@ -121,6 +121,8 @@ export default {
       if (book_proc) {
         this.book_proc = book_proc
       }
+
+      document.title += ' | ' + this.book.title
     },
   },
 }

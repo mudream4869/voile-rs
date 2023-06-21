@@ -25,30 +25,73 @@ import { createApp } from 'vue'
 import { registerPlugins } from '@/plugins'
 import vuetify from './plugins/vuetify'
 
+import { nextTick } from 'vue';
+
 import { createRouter, createWebHashHistory } from 'vue-router'
 
 const routes = [
   {
     name: 'mixture_reader',
     path: '/mixture_reader/:book_id/contents/:content_idx/:paging',
-    component: MixtureReader
+    component: MixtureReader,
   },
   {
     name: 'pdf_reader',
     path: '/pdf_reader/:book_id/contents/:content_idx/:paging',
-    component: PDFReader
+    component: PDFReader,
   },
   {
     path: "/*",
     component: Layout,
     children: [
-      { path: '/', component: HomePage },
-      { name: 'books', path: '/books', component: BooksPage },
-      { name: 'book', path: '/books/:book_id', component: BookPage },
-      { name: 'edit_book', path: '/books/:book_id/edit', component: BookEdit },
-      { name: 'add_book', path: '/add_book', component: AddBookPage },
-      { path: '/config', component: ConfigPage },
-      { name: 'books_manage', path: '/books_manage', component: BooksManage },
+      {
+        path: '/',
+        component: HomePage,
+        meta: {
+          title: '首頁',
+        },
+      },
+      {
+        name: 'books',
+        path: '/books',
+        component: BooksPage,
+        meta: {
+          title: '書櫃',
+        },
+      },
+      {
+        name: 'book',
+        path: '/books/:book_id',
+        component: BookPage,
+      },
+      {
+        name: 'edit_book',
+        path: '/books/:book_id/edit',
+        component: BookEdit,
+      },
+      {
+        name: 'add_book',
+        path: '/add_book',
+        component: AddBookPage,
+        meta: {
+          title: '新增書籍',
+        },
+      },
+      {
+        path: '/config',
+        component: ConfigPage,
+        meta: {
+          title: '使用者設定',
+        },
+      },
+      {
+        name: 'books_manage',
+        path: '/books_manage',
+        component: BooksManage,
+        meta: {
+          title: '書籍管理',
+        },
+      },
     ],
   }
 ]
@@ -61,6 +104,16 @@ const router = createRouter({
   },
   routes,
 })
+
+router.afterEach((to, from) => {
+  nextTick(() => {
+    if (to.meta.title) {
+      document.title = '我的圖書館 | ' + to.meta.title;
+    } else {
+      document.title = '我的圖書館';
+    }
+  });
+});
 
 const app = createApp(App)
 
