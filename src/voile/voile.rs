@@ -1,54 +1,10 @@
+use path_absolutize::Absolutize;
 use std::io::Write;
-use std::str::FromStr;
 
 use futures_util::TryStreamExt;
 use serde::{Deserialize, Serialize};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
-#[derive(Debug)]
-struct BookIDNotFoundError(String);
-
-impl std::fmt::Display for BookIDNotFoundError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "book_id: {} not found", self.0)
-    }
-}
-
-impl std::error::Error for BookIDNotFoundError {}
-
-#[derive(Debug)]
-struct IndexOutOfRange(usize);
-
-impl std::fmt::Display for IndexOutOfRange {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "index: {} out of range", self.0)
-    }
-}
-
-impl std::error::Error for IndexOutOfRange {}
-
-#[derive(Debug)]
-struct NotExist(String);
-
-impl std::fmt::Display for NotExist {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "data not exist: {}", self.0)
-    }
-}
-
-impl std::error::Error for NotExist {}
-
-#[derive(Debug)]
-struct FileTypeError(String);
-
-impl std::fmt::Display for FileTypeError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "file type: {} not supported", self.0)
-    }
-}
-
-impl std::error::Error for FileTypeError {}
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct BookDetails {
@@ -209,7 +165,7 @@ impl Voile {
             });
         }
 
-        Err(Box::new(BookIDNotFoundError(book_id)))
+        Err(Box::new(super::errors::BookIDNotFoundError(book_id)))
     }
 
     pub fn set_book_proc(&self, book_id: String, book_proc: &BookProc) -> Result<()> {
@@ -235,26 +191,35 @@ impl Voile {
 
     pub fn get_books(&mut self) -> Result<Vec<Book>> {
         let mut ret = vec![];
-        for path in std::fs::read_dir(self.books_dir.as_str())? {
+        for path in std::fs::read_dir(&self.books_dir)? {
             let entry = path?;
 
             if !entry.file_type()?.is_dir() {
                 continue;
             }
 
-            let title = String::from_str(entry.file_name().to_str().unwrap()).unwrap();
+            let book_id = if let Some(filename) = entry.file_name().to_str() {
+                filename.to_string()
+            } else {
+                log::info!("Fail to get filename: {:?}", entry);
+                continue;
+            };
 
-            if title.starts_with(".") {
+            if book_id.starts_with(".") {
                 // hidden files
                 continue;
             }
 
-            match self.get_book(title) {
+            match self.get_book(book_id) {
                 Ok(book) => ret.push(book),
                 Err(_) => {}
             }
         }
         Ok(ret)
+    }
+
+    fn get_book_dir(&self, book_id: &String) -> std::path::PathBuf {
+        [self.books_dir.as_str(), book_id.as_str()].iter().collect()
     }
 
     pub fn get_book(&mut self, book_id: String) -> Result<Book> {
@@ -263,10 +228,9 @@ impl Voile {
         }
 
         // TODO: dir safety check
-        let full_dir: std::path::PathBuf =
-            [self.books_dir.as_str(), book_id.as_str()].iter().collect();
+        let book_dir = self.get_book_dir(&book_id);
 
-        let default_created_time = std::fs::metadata(full_dir.clone())?
+        let default_created_time = std::fs::metadata(book_dir.clone())?
             .created()?
             .duration_since(std::time::SystemTime::UNIX_EPOCH)?
             .as_secs();
@@ -274,36 +238,36 @@ impl Voile {
         let mut default_book_cover: Option<String> = None;
 
         let mut content_titles = vec![];
-        for path in std::fs::read_dir(full_dir.clone())? {
+        for path in std::fs::read_dir(book_dir.clone())? {
             let entry = path?;
 
             if !entry.file_type()?.is_file() {
                 continue;
             }
 
-            let title = String::from_str(entry.file_name().to_str().unwrap())?;
+            let filename = entry.file_name().to_str().unwrap().to_string();
 
-            if title == "details.json" {
+            if filename == "details.json" {
                 default_modified_time = entry
                     .metadata()?
                     .modified()?
                     .duration_since(std::time::SystemTime::UNIX_EPOCH)?
                     .as_secs();
                 continue;
-            } else if title == "book_cover.jpg" {
-                default_book_cover = Some(title);
+            } else if filename == "book_cover.jpg" {
+                default_book_cover = Some(filename);
                 continue;
-            } else if title.starts_with('.') {
+            } else if filename.starts_with('.') {
                 // hidden files
                 continue;
             }
 
-            content_titles.push(title);
+            content_titles.push(filename);
         }
 
         content_titles.sort();
 
-        let local_path = std::fs::canonicalize(full_dir.clone())?;
+        let local_path = std::path::Path::new(&book_dir).absolutize().unwrap();
 
         let mut book = Book {
             book_id: book_id.clone(),
@@ -316,14 +280,11 @@ impl Voile {
 
             created_timestamp: default_created_time,
             modified_timestamp: default_modified_time,
-            local_path: String::from(local_path.to_string_lossy()),
+            local_path: local_path.to_str().unwrap().to_string(),
         };
 
         // details.json is optional
-        let detail_filename: std::path::PathBuf =
-            [self.books_dir.as_str(), book_id.as_str(), "details.json"]
-                .iter()
-                .collect();
+        let detail_filename = book_dir.join("details.json");
 
         if let Ok(book_detail) = BookDetails::from_filename(detail_filename) {
             book.apply_book_detail(book_detail);
@@ -353,10 +314,7 @@ impl Voile {
             return Ok(());
         }
 
-        let full_dir: std::path::PathBuf =
-            [self.books_dir.as_str(), book_id.as_str()].iter().collect();
-
-        std::fs::remove_dir_all(full_dir)?;
+        std::fs::remove_dir_all(self.get_book_dir(&book_id))?;
 
         self.book_cache.remove(&book_id);
 
@@ -364,20 +322,28 @@ impl Voile {
     }
 
     pub async fn add_book(&self, field: actix_multipart::Field) -> Result<()> {
-        // TODO: refine error
+        let filename = if let Some(filename) = field.content_disposition().get_filename() {
+            filename.to_string()
+        } else {
+            return Err(Box::new(super::errors::NotExist("filename".to_string())));
+        };
 
-        let filename = field.content_disposition().get_filename().unwrap();
-
-        if filename.ends_with(".txt") {
-            return self.add_book_txt(field).await;
-        } else if filename.ends_with(".pdf") {
-            return self.add_book_pdf(field).await;
-        } else if filename.ends_with(".zip") {
-            return self.add_book_zip(field).await;
+        if let Some(book_id) = filename.strip_suffix(".txt") {
+            self.add_book_txt(field, filename.clone(), book_id.to_string())
+                .await?;
+            return Ok(());
+        } else if let Some(book_id) = filename.strip_suffix(".pdf") {
+            self.add_book_pdf(field, filename.clone(), book_id.to_string())
+                .await?;
+            return Ok(());
+        } else if let Some(book_id) = filename.strip_suffix(".zip") {
+            self.add_book_zip(field, filename.clone(), book_id.to_string())
+                .await?;
+            return Ok(());
         }
 
-        Err(Box::new(FileTypeError(
-            String::from_str("Not match txt or zip").unwrap(),
+        Err(Box::new(super::errors::FileTypeError(
+            "Not match txt, pdf or zip".to_string(),
         )))
     }
 
@@ -386,7 +352,7 @@ impl Voile {
         mut field: actix_multipart::Field,
         filepath: std::path::PathBuf,
     ) -> Result<()> {
-        let mut f = actix_web::web::block(|| std::fs::File::create(filepath)).await??;
+        let mut f = std::fs::File::create(filepath)?;
 
         // Field in turn is stream of *Bytes* object
         while let Some(chunk) = field.try_next().await? {
@@ -397,54 +363,53 @@ impl Voile {
         Ok(())
     }
 
-    async fn add_book_txt(&self, field: actix_multipart::Field) -> Result<()> {
-        let filename = field.content_disposition().get_filename().unwrap();
-
-        let book_id = filename.strip_suffix(".txt").unwrap();
-
-        let folderpath: std::path::PathBuf = [self.books_dir.as_str(), book_id].iter().collect();
+    async fn add_book_txt(
+        &self,
+        field: actix_multipart::Field,
+        filename: String,
+        book_id: String,
+    ) -> Result<()> {
+        let folderpath = self.get_book_dir(&book_id);
 
         // prevent same folder_name
-        std::fs::create_dir(folderpath)?;
+        std::fs::create_dir(&folderpath)?;
 
-        let filepath: std::path::PathBuf = [self.books_dir.as_str(), book_id, filename]
-            .iter()
-            .collect();
+        let filepath = folderpath.join(&filename);
 
         self.download_file_from_multipart(field, filepath).await
     }
 
-    async fn add_book_pdf(&self, field: actix_multipart::Field) -> Result<()> {
-        let filename = field.content_disposition().get_filename().unwrap();
-
-        let book_id = filename.strip_suffix(".pdf").unwrap();
-
-        let folderpath: std::path::PathBuf = [self.books_dir.as_str(), book_id].iter().collect();
+    async fn add_book_pdf(
+        &self,
+        field: actix_multipart::Field,
+        filename: String,
+        book_id: String,
+    ) -> Result<()> {
+        let folderpath = self.get_book_dir(&book_id);
 
         // prevent same folder_name
-        std::fs::create_dir(folderpath)?;
+        std::fs::create_dir(&folderpath)?;
 
-        let filepath: std::path::PathBuf = [self.books_dir.as_str(), book_id, filename]
-            .iter()
-            .collect();
+        let filepath = folderpath.join(filename);
 
         self.download_file_from_multipart(field, filepath).await
     }
 
-    async fn add_book_zip(&self, field: actix_multipart::Field) -> Result<()> {
-        let filename = String::from_str(field.content_disposition().get_filename().unwrap())?;
-
-        let book_id = filename.strip_suffix(".zip").unwrap();
-
-        let folderpath: std::path::PathBuf = [self.books_dir.as_str(), book_id].iter().collect();
+    async fn add_book_zip(
+        &self,
+        field: actix_multipart::Field,
+        filename: String,
+        book_id: String,
+    ) -> Result<()> {
+        let folderpath = self.get_book_dir(&book_id);
 
         // TODO: exception safe
         // prevent same folder_name
-        std::fs::create_dir(folderpath)?;
+        std::fs::create_dir(&folderpath)?;
 
         let tmp_dir = tempfile::tempdir()?;
 
-        let zip_filepath = tmp_dir.path().join(filename.as_str());
+        let zip_filepath = tmp_dir.path().join(&filename);
 
         self.download_file_from_multipart(field, zip_filepath.clone())
             .await?;
@@ -460,9 +425,7 @@ impl Voile {
                 continue;
             }
 
-            let out_filepath: std::path::PathBuf = [self.books_dir.as_str(), book_id, filename]
-                .iter()
-                .collect();
+            let out_filepath = folderpath.join(filename);
 
             let mut outfile = std::fs::File::create(&out_filepath)?;
             std::io::copy(&mut file, &mut outfile)?;
@@ -480,38 +443,23 @@ impl Voile {
         let book = self.get_book(book_id.clone())?;
         let content_id = match book.content_titles.get(content_idx) {
             Some(s) => s,
-            None => return Err(Box::new(IndexOutOfRange(content_idx))),
+            None => return Err(Box::new(super::errors::IndexOutOfRange(content_idx))),
         };
 
-        let full_dir: std::path::PathBuf = [
-            self.books_dir.as_str(),
-            book_id.as_str(),
-            content_id.as_str(),
-        ]
-        .iter()
-        .collect();
-
-        Ok(full_dir)
+        Ok(self.get_book_dir(&book_id).join(content_id))
     }
 
     pub fn get_book_cover_path(&mut self, book_id: String) -> Result<std::path::PathBuf> {
         // TODO: dir safety check
         let book = self.get_book(book_id.clone())?;
-        if book.book_cover.is_none() {
-            return Err(Box::new(NotExist(String::from_str("book_cover").unwrap())));
-        }
 
-        let book_cover = book.book_cover.unwrap();
+        let book_cover = if let Some(book_cover) = book.book_cover {
+            book_cover
+        } else {
+            return Err(Box::new(super::errors::NotExist("book_cover".to_string())));
+        };
 
-        let full_dir: std::path::PathBuf = [
-            self.books_dir.as_str(),
-            book_id.as_str(),
-            book_cover.as_str(),
-        ]
-        .iter()
-        .collect();
-
-        Ok(full_dir)
+        Ok(self.get_book_dir(&book_id).join(book_cover))
     }
 
     pub async fn set_book_cover(
@@ -519,10 +467,7 @@ impl Voile {
         book_id: String,
         field: actix_multipart::Field,
     ) -> Result<()> {
-        let filepath: std::path::PathBuf =
-            [self.books_dir.as_str(), book_id.as_str(), "book_cover.jpg"]
-                .iter()
-                .collect();
+        let filepath = self.get_book_dir(&book_id).join("book_cover.jpg");
 
         self.download_file_from_multipart(field, filepath).await?;
 
@@ -535,10 +480,7 @@ impl Voile {
         let cur_book = self.book_cache.get_mut(&book_id).unwrap();
         cur_book.apply_book_detail(book_detail.clone());
 
-        let detail_filename: std::path::PathBuf =
-            [self.books_dir.as_str(), book_id.as_str(), "details.json"]
-                .iter()
-                .collect();
+        let detail_filename = self.get_book_dir(&book_id).join("details.json");
 
         book_detail.write_to_filename(detail_filename)?;
         Ok(())

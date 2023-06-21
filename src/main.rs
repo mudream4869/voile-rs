@@ -8,22 +8,19 @@ fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
     let args: Vec<String> = std::env::args().collect();
 
-    let mut voile_config_dir: std::path::PathBuf;
-    let mut default_server_data_dir: std::path::PathBuf = std::env::current_dir()?;
-    default_server_data_dir.push("data");
+    let voile_config_dir: std::path::PathBuf;
 
     if args.len() == 1 {
         match dirs::config_dir() {
             Some(config_dir) => {
-                voile_config_dir = config_dir.clone();
-                voile_config_dir.push("Voile");
+                voile_config_dir = config_dir.join("Voile");
             }
             None => {
                 return Err(std::io::Error::new(std::io::ErrorKind::Other, ""));
             }
         }
     } else if args.len() == 2 {
-        voile_config_dir = [args[1].as_str()].iter().collect();
+        voile_config_dir = std::path::PathBuf::from(args[1].as_str());
     } else {
         return Err(std::io::Error::new(std::io::ErrorKind::Other, ""));
     }

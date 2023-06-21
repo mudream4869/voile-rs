@@ -11,8 +11,7 @@ pub struct ConfigHandler {
 
 impl ConfigHandler {
     pub fn new(voile_config_dir: std::path::PathBuf) -> std::io::Result<ConfigHandler> {
-        let mut user_config_filename = voile_config_dir.clone();
-        user_config_filename.push("user.toml");
+        let user_config_filename = voile_config_dir.join("user.toml");
 
         let system_config = crate::config::system_config::SystemConfig::from_dir(voile_config_dir)?;
 
@@ -25,7 +24,7 @@ impl ConfigHandler {
     }
 
     pub fn get_user_config(&self) -> std::io::Result<crate::config::user_config::UserConfig> {
-        crate::config::user_config::UserConfig::from_toml(self.user_config_filename.clone())
+        crate::config::user_config::UserConfig::from_toml(&self.user_config_filename)
     }
 
     pub fn get_system_config(&self) -> crate::config::system_config::SystemConfig {
@@ -59,7 +58,7 @@ impl ConfigHandler {
         let filepath = self.get_user_avatar_path();
 
         // File::create is blocking operation, use threadpool
-        let mut f = actix_web::web::block(|| std::fs::File::create(filepath)).await??;
+        let mut f = std::fs::File::create(filepath)?;
 
         // Field in turn is stream of *Bytes* object
         while let Some(chunk) = field.try_next().await? {

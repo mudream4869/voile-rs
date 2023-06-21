@@ -32,7 +32,7 @@ async fn set_user_config(
             .set_user_theme(user_config.theme.clone())?;
     }
 
-    Ok(actix_web::HttpResponse::Ok().into())
+    Ok(actix_web::HttpResponse::Ok().finish())
 }
 
 #[get("/api/config/user/avatar")]
@@ -51,7 +51,7 @@ async fn set_user_avatar(
         data.lock().unwrap().set_user_avatar(field).await?;
     }
 
-    Ok(actix_web::HttpResponse::Ok().into())
+    Ok(actix_web::HttpResponse::Ok().finish())
 }
 
 pub fn configure(cfg: &mut web::ServiceConfig, voile_config_dir: std::path::PathBuf) {

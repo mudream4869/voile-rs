@@ -4,11 +4,8 @@ pub fn default_system_config(voile_config_dir: std::path::PathBuf) -> std::io::R
     let default_toml = include_str!("../../configs/system.default.toml");
     let mut doc: toml_edit::Document = default_toml.parse().unwrap();
 
-    let mut default_server_data_dir = voile_config_dir.clone();
-    default_server_data_dir.push("server_data");
-
-    let mut default_data_dir = voile_config_dir.clone();
-    default_data_dir.push("books");
+    let default_server_data_dir = voile_config_dir.join("server_data");
+    let default_data_dir = voile_config_dir.join("books");
 
     doc["data_dir"] = toml_edit::value(default_data_dir.to_str().unwrap());
     doc["server_data_dir"] = toml_edit::value(default_server_data_dir.to_str().unwrap());
@@ -44,17 +41,11 @@ pub struct SystemConfig {
 
 impl SystemConfig {
     pub fn from_dir(voile_config_dir: std::path::PathBuf) -> std::io::Result<SystemConfig> {
-        let mut system_config_filename = voile_config_dir.clone();
-        system_config_filename.push("system.toml");
+        let default_server_data_dir = voile_config_dir.join("server_data");
+        let default_data_dir = voile_config_dir.join("books");
 
-        let mut default_server_data_dir = voile_config_dir.clone();
-        default_server_data_dir.push("server_data");
-
-        let mut default_data_dir = voile_config_dir.clone();
-        default_data_dir.push("books");
-
-        let detail_str = std::fs::read_to_string(system_config_filename)?;
-        let mut config: SystemConfig = toml::from_str(detail_str.as_str())?;
+        let config_str = std::fs::read_to_string(voile_config_dir.join("system.toml"))?;
+        let mut config: SystemConfig = toml::from_str(config_str.as_str())?;
 
         if config.server_data_dir.is_empty() {
             config.server_data_dir = default_server_data_dir.to_str().unwrap().to_string();

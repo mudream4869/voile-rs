@@ -4,6 +4,7 @@ use futures_util::TryStreamExt;
 
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
+
 struct Voile {
     voile: Arc<Mutex<crate::voile::voile::Voile>>,
 }
@@ -16,7 +17,7 @@ struct RespBooks {
 #[get("/api/books")]
 async fn get_books(data: web::Data<Voile>) -> actix_web::Result<impl Responder> {
     let books = data.voile.lock().unwrap().get_books()?;
-    Ok(web::Json(RespBooks { books: books }))
+    Ok(web::Json(RespBooks { books }))
 }
 
 #[get("/api/books_tags")]
@@ -52,7 +53,7 @@ async fn delete_book(
 
     data.voile.lock().unwrap().delete_book(book_id)?;
 
-    Ok(actix_web::HttpResponse::Ok().into())
+    Ok(actix_web::HttpResponse::Ok().finish())
 }
 
 #[post("/api/books")]
@@ -63,12 +64,12 @@ async fn add_book(
     while let Some(item) = payload.next().await {
         let field = item?;
         let res = data.voile.lock().unwrap().add_book(field).await;
-        if let Some(err) = res.err() {
+        if let Err(err) = res {
             log::warn!("Skip book due to {}", err);
         }
     }
 
-    Ok(actix_web::HttpResponse::Ok().into())
+    Ok(actix_web::HttpResponse::Ok().finish())
 }
 
 #[get("/api/books/{book_id}/book_cover")]
@@ -98,7 +99,7 @@ async fn set_book_cover(
             .await?;
     }
 
-    Ok(actix_web::HttpResponse::Ok().into())
+    Ok(actix_web::HttpResponse::Ok().finish())
 }
 
 #[post("/api/books/{book_id}")]
@@ -114,7 +115,7 @@ async fn set_book_detail(
         .unwrap()
         .set_book_detail(book_id, book_detail.0)?;
 
-    Ok(actix_web::HttpResponse::Ok().into())
+    Ok(actix_web::HttpResponse::Ok().finish())
 }
 
 #[get("/api/books/{book_id}/contents/{content_id}")]
@@ -151,7 +152,6 @@ async fn set_book_proc(
     data: web::Data<Voile>,
     book_proc: web::Json<crate::voile::voile::BookProc>,
 ) -> actix_web::Result<impl Responder> {
-    // TODO: error handling
     let book_id = path.into_inner();
 
     data.voile

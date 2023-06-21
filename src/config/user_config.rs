@@ -15,8 +15,7 @@ pub struct UserConfig {
 
 impl UserConfig {
     pub fn from_toml<P: AsRef<std::path::Path>>(filename: P) -> std::io::Result<UserConfig> {
-        let detail_str = std::fs::read_to_string(filename)?;
-        let detail: UserConfig = toml::from_str(&detail_str)?;
-        Ok(detail)
+        let config_str = std::fs::read_to_string(filename)?;
+        Ok(toml::from_str(&config_str)?)
     }
 }
