@@ -2,12 +2,8 @@ use actix_web::{delete, get, post, web, Responder};
 use futures_util::StreamExt as _;
 use futures_util::TryStreamExt;
 
+use crate::appstate::appstate::SharedAppState;
 use serde::Serialize;
-use std::sync::{Arc, Mutex};
-
-struct Voile {
-    voile: Arc<Mutex<crate::voile::voile::Voile>>,
-}
 
 #[derive(Serialize)]
 struct RespBooks {
@@ -15,31 +11,33 @@ struct RespBooks {
 }
 
 #[get("/api/books")]
-async fn get_books(data: web::Data<Voile>) -> actix_web::Result<impl Responder> {
-    let books = data.voile.lock().unwrap().get_books()?;
+async fn get_books(app_state: web::Data<SharedAppState>) -> actix_web::Result<impl Responder> {
+    let books = app_state.lock().unwrap().voile.get_books()?;
     Ok(web::Json(RespBooks { books }))
 }
 
 #[get("/api/books_tags")]
-async fn get_books_tags(data: web::Data<Voile>) -> actix_web::Result<impl Responder> {
-    let tags = data.voile.lock().unwrap().get_all_book_tags()?;
+async fn get_books_tags(app_state: web::Data<SharedAppState>) -> actix_web::Result<impl Responder> {
+    let tags = app_state.lock().unwrap().voile.get_all_book_tags()?;
     Ok(web::Json(tags))
 }
 
 #[get("/api/books_types")]
-async fn get_books_types(data: web::Data<Voile>) -> actix_web::Result<impl Responder> {
-    let types = data.voile.lock().unwrap().get_all_book_types()?;
+async fn get_books_types(
+    app_state: web::Data<SharedAppState>,
+) -> actix_web::Result<impl Responder> {
+    let types = app_state.lock().unwrap().voile.get_all_book_types()?;
     Ok(web::Json(types))
 }
 
 #[get("/api/books/{book_id}")]
 async fn get_book(
     path: web::Path<String>,
-    data: web::Data<Voile>,
+    app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<impl Responder> {
     let book_id = path.into_inner();
 
-    let book = data.voile.lock().unwrap().get_book(book_id)?;
+    let book = app_state.lock().unwrap().voile.get_book(book_id)?;
 
     Ok(web::Json(book))
 }
@@ -47,11 +45,11 @@ async fn get_book(
 #[delete("/api/books/{book_id}")]
 async fn delete_book(
     path: web::Path<String>,
-    data: web::Data<Voile>,
+    app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<actix_web::HttpResponse> {
     let book_id = path.into_inner();
 
-    data.voile.lock().unwrap().delete_book(book_id)?;
+    app_state.lock().unwrap().voile.delete_book(book_id)?;
 
     Ok(actix_web::HttpResponse::Ok().finish())
 }
@@ -59,11 +57,11 @@ async fn delete_book(
 #[post("/api/books")]
 async fn add_book(
     mut payload: actix_multipart::Multipart,
-    data: web::Data<Voile>,
+    app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<actix_web::HttpResponse> {
     while let Some(item) = payload.next().await {
         let field = item?;
-        let res = data.voile.lock().unwrap().add_book(field).await;
+        let res = app_state.lock().unwrap().voile.add_book(field).await;
         if let Err(err) = res {
             log::warn!("Skip book due to {}", err);
         }
@@ -75,11 +73,15 @@ async fn add_book(
 #[get("/api/books/{book_id}/book_cover")]
 async fn get_book_cover(
     path: web::Path<String>,
-    data: web::Data<Voile>,
+    app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<impl Responder> {
     let book_id = path.into_inner();
 
-    let book_cover_path = data.voile.lock().unwrap().get_book_cover_path(book_id)?;
+    let book_cover_path = app_state
+        .lock()
+        .unwrap()
+        .voile
+        .get_book_cover_path(book_id)?;
 
     Ok(actix_files::NamedFile::open(book_cover_path)?)
 }
@@ -88,13 +90,14 @@ async fn get_book_cover(
 async fn set_book_cover(
     path: web::Path<String>,
     mut payload: actix_multipart::Multipart,
-    data: web::Data<Voile>,
+    app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<actix_web::HttpResponse> {
     let book_id = path.into_inner();
     if let Some(field) = payload.try_next().await? {
-        data.voile
+        app_state
             .lock()
             .unwrap()
+            .voile
             .set_book_cover(book_id, field)
             .await?;
     }
@@ -105,14 +108,15 @@ async fn set_book_cover(
 #[post("/api/books/{book_id}")]
 async fn set_book_detail(
     path: web::Path<String>,
-    data: web::Data<Voile>,
+    app_state: web::Data<SharedAppState>,
     book_detail: web::Json<crate::voile::voile::BookDetails>,
 ) -> actix_web::Result<actix_web::HttpResponse> {
     let book_id = path.into_inner();
 
-    data.voile
+    app_state
         .lock()
         .unwrap()
+        .voile
         .set_book_detail(book_id, book_detail.0)?;
 
     Ok(actix_web::HttpResponse::Ok().finish())
@@ -121,14 +125,14 @@ async fn set_book_detail(
 #[get("/api/books/{book_id}/contents/{content_id}")]
 async fn get_book_content(
     path: web::Path<(String, usize)>,
-    data: web::Data<Voile>,
+    app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<impl Responder> {
     let (book_id, content_idx) = path.into_inner();
 
-    let content_path = data
-        .voile
+    let content_path = app_state
         .lock()
         .unwrap()
+        .voile
         .get_book_content_path(book_id, content_idx)?;
 
     Ok(actix_files::NamedFile::open(content_path)?)
@@ -137,11 +141,11 @@ async fn get_book_content(
 #[get("/api/user/book_proc/{book_id}")]
 async fn get_book_proc(
     path: web::Path<String>,
-    data: web::Data<Voile>,
+    app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<impl Responder> {
     let book_id = path.into_inner();
 
-    let book_proc = data.voile.lock().unwrap().get_book_proc(book_id)?;
+    let book_proc = app_state.lock().unwrap().voile.get_book_proc(book_id)?;
 
     Ok(web::Json(book_proc))
 }
@@ -149,28 +153,22 @@ async fn get_book_proc(
 #[post("/api/user/book_proc/{book_id}")]
 async fn set_book_proc(
     path: web::Path<String>,
-    data: web::Data<Voile>,
+    app_state: web::Data<SharedAppState>,
     book_proc: web::Json<crate::voile::voile::BookProc>,
 ) -> actix_web::Result<impl Responder> {
     let book_id = path.into_inner();
 
-    data.voile
+    app_state
         .lock()
         .unwrap()
+        .voile
         .set_book_proc(book_id, &book_proc.0)?;
 
     Ok(book_proc)
 }
 
-pub fn configure(cfg: &mut web::ServiceConfig, data_dir: String) {
-    let voile = Voile {
-        voile: Arc::new(Mutex::new(
-            crate::voile::voile::Voile::new(data_dir.clone()).unwrap(),
-        )),
-    };
-
-    cfg.app_data(web::Data::new(voile))
-        .service(get_books)
+pub fn configure(cfg: &mut web::ServiceConfig) {
+    cfg.service(get_books)
         .service(get_books_tags)
         .service(get_books_types)
         .service(get_book)

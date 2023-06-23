@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BookDetails {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
@@ -48,7 +48,7 @@ impl BookDetails {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub struct Book {
     pub book_id: String,
     pub title: String,

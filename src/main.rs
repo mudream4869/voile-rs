@@ -1,5 +1,8 @@
 use path_absolutize::Absolutize;
 
+use std::sync::{Arc, Mutex};
+
+pub mod appstate;
 pub mod config;
 pub mod routes;
 pub mod voile;
@@ -40,13 +43,20 @@ fn main() -> std::io::Result<()> {
 async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
     let conf = config::system_config::SystemConfig::from_dir(voile_config_dir.clone())?;
 
+    // TODO: remove unwrap
+    let app_state: crate::appstate::appstate::SharedAppState = Arc::new(Mutex::new(
+        crate::appstate::appstate::AppState::new(voile_config_dir.clone(), conf.data_dir.clone())
+            .unwrap(),
+    ));
+
     log::info!("Listen on: http://{}:{}", conf.ip.clone(), conf.port);
 
     actix_web::HttpServer::new(move || {
         let app = actix_web::App::new()
+            .app_data(app_state.clone())
             .wrap(actix_web::middleware::Logger::default())
-            .configure(|s| routes::book::configure(s, conf.data_dir.clone()))
-            .configure(|s| routes::config::configure(s, voile_config_dir.clone()));
+            .configure(|s| routes::book::configure(s))
+            .configure(|s| routes::config::configure(s));
 
         if conf.frontend_dir.is_empty() {
             app.configure(routes::default_frontend::configure)
