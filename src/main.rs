@@ -53,7 +53,7 @@ async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
 
     actix_web::HttpServer::new(move || {
         let app = actix_web::App::new()
-            .app_data(app_state.clone())
+            .app_data(actix_web::web::Data::new(app_state.clone()))
             .wrap(actix_web::middleware::Logger::default())
             .configure(|s| routes::book::configure(s))
             .configure(|s| routes::config::configure(s));
