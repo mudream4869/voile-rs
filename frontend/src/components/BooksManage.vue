@@ -175,7 +175,7 @@ export default {
   },
   methods: {
     async fetchData() {
-      this.books = await getAllBooks()
+      this.books = (await getAllBooks()).sort((b1, b2) => b2.created_timestamp - b1.created_timestamp)
       this.tags = await getAllTags()
       this.book_types = await getAllTypes()
       this.book_types.push('<NULL>')
