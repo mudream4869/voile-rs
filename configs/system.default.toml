@@ -12,3 +12,6 @@ data_dir = ""
 # Default server_data_dir = '[config_dir]/server_data'
 # Uncomment and specify a custom server data directory if needed
 server_data_dir = ""
+
+# Open browser when start serving
+open_browser = true

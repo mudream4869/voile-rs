@@ -49,9 +49,11 @@ async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
             .unwrap(),
     ));
 
-    log::info!("Listen on: http://{}:{}", conf.ip.clone(), conf.port);
+    let serve_url = format!("http://{}:{}", conf.ip.clone(), conf.port);
 
-    actix_web::HttpServer::new(move || {
+    log::info!("Listen on: {}", serve_url);
+
+    let server = actix_web::HttpServer::new(move || {
         let app = actix_web::App::new()
             .app_data(actix_web::web::Data::new(app_state.clone()))
             .wrap(actix_web::middleware::Logger::default())
@@ -65,6 +67,13 @@ async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
         }
     })
     .bind((conf.ip, conf.port))?
-    .run()
-    .await
+    .run();
+
+    if conf.open_browser {
+        if let Err(err) = open::that(&serve_url) {
+            eprintln!("An error occurred when opening '{}': {}", serve_url, err);
+        }
+    }
+
+    server.await
 }

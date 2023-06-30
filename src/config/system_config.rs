@@ -21,6 +21,10 @@ fn default_ip() -> String {
     "127.0.0.1".to_string()
 }
 
+fn default_open_browser() -> bool {
+    true
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct SystemConfig {
     #[serde(default = "default_ip")]
@@ -37,6 +41,9 @@ pub struct SystemConfig {
 
     #[serde(default)]
     pub server_data_dir: String,
+
+    #[serde(default = "default_open_browser")]
+    pub open_browser: bool,
 }
 
 impl SystemConfig {
