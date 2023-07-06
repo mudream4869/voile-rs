@@ -1,5 +1,6 @@
 use path_absolutize::Absolutize;
 use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -32,13 +33,13 @@ impl BookDetails {
         }
     }
 
-    pub fn from_filename<P: AsRef<std::path::Path>>(filename: P) -> std::io::Result<BookDetails> {
+    pub fn from_filename<P: AsRef<Path>>(filename: P) -> std::io::Result<BookDetails> {
         let detail_str = std::fs::read_to_string(filename)?;
         let detail: BookDetails = serde_json::from_str(&detail_str)?;
         Ok(detail)
     }
 
-    pub fn write_to_filename<P: AsRef<std::path::Path>>(&self, filename: P) -> std::io::Result<()> {
+    pub fn write_to_filename<P: AsRef<Path>>(&self, filename: P) -> std::io::Result<()> {
         let detail_str = serde_json::to_string_pretty(&self)?;
         std::fs::write(filename, detail_str)?;
         Ok(())
@@ -109,7 +110,7 @@ pub struct Voile {
 }
 
 fn is_image(file_path: &str) -> bool {
-    let path = std::path::Path::new(file_path);
+    let path = Path::new(file_path);
     let extension = path.extension();
 
     if let Some(ext) = extension {
@@ -215,7 +216,7 @@ impl Voile {
         Ok(ret)
     }
 
-    fn get_book_dir(&self, book_id: &String) -> std::path::PathBuf {
+    fn get_book_dir(&self, book_id: &String) -> PathBuf {
         [self.books_dir.as_str(), book_id.as_str()].iter().collect()
     }
 
@@ -264,7 +265,7 @@ impl Voile {
 
         content_titles.sort();
 
-        let local_path = std::path::Path::new(&book_dir).absolutize().unwrap();
+        let local_path = Path::new(&book_dir).absolutize().unwrap();
 
         let mut book = Book {
             book_id: book_id.clone(),
@@ -318,7 +319,7 @@ impl Voile {
         Ok(())
     }
 
-    pub async fn add_book(&self, filename: String, filesource: std::path::PathBuf) -> Result<()> {
+    pub async fn add_book(&self, filename: String, filesource: PathBuf) -> Result<()> {
         if let Some(book_id) = filename.strip_suffix(".txt") {
             self.add_book_txt(filesource, filename.clone(), book_id.to_string())
                 .await?;
@@ -339,7 +340,7 @@ impl Voile {
 
     async fn add_book_txt(
         &self,
-        filesource: std::path::PathBuf,
+        filesource: PathBuf,
         filename: String,
         book_id: String,
     ) -> Result<()> {
@@ -356,7 +357,7 @@ impl Voile {
 
     async fn add_book_pdf(
         &self,
-        filesource: std::path::PathBuf,
+        filesource: PathBuf,
         filename: String,
         book_id: String,
     ) -> Result<()> {
@@ -371,7 +372,7 @@ impl Voile {
         Ok(())
     }
 
-    async fn add_book_zip(&self, filesource: std::path::PathBuf, book_id: String) -> Result<()> {
+    async fn add_book_zip(&self, filesource: PathBuf, book_id: String) -> Result<()> {
         let folderpath = self.get_book_dir(&book_id);
 
         // TODO: exception safe
@@ -402,7 +403,7 @@ impl Voile {
         &mut self,
         book_id: String,
         content_idx: usize,
-    ) -> Result<std::path::PathBuf> {
+    ) -> Result<PathBuf> {
         // TODO: dir safety check
         let book = self.get_book(book_id.clone())?;
         let content_id = match book.content_titles.get(content_idx) {
@@ -413,7 +414,7 @@ impl Voile {
         Ok(self.get_book_dir(&book_id).join(content_id))
     }
 
-    pub fn get_book_cover_path(&mut self, book_id: String) -> Result<std::path::PathBuf> {
+    pub fn get_book_cover_path(&mut self, book_id: String) -> Result<PathBuf> {
         // TODO: dir safety check
         let book = self.get_book(book_id.clone())?;
 
@@ -426,11 +427,7 @@ impl Voile {
         Ok(self.get_book_dir(&book_id).join(book_cover))
     }
 
-    pub async fn set_book_cover(
-        &mut self,
-        book_id: String,
-        filesource: std::path::PathBuf,
-    ) -> Result<()> {
+    pub async fn set_book_cover(&mut self, book_id: String, filesource: PathBuf) -> Result<()> {
         let filepath = self.get_book_dir(&book_id).join("book_cover.jpg");
 
         std::fs::rename(filesource, filepath)?;
