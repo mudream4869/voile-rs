@@ -1,7 +1,4 @@
 use path_absolutize::Absolutize;
-use std::io::Write;
-
-use futures_util::TryStreamExt;
 use serde::{Deserialize, Serialize};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -321,24 +318,17 @@ impl Voile {
         Ok(())
     }
 
-    pub async fn add_book(&self, field: actix_multipart::Field) -> Result<()> {
-        let filename = if let Some(filename) = field.content_disposition().get_filename() {
-            filename.to_string()
-        } else {
-            return Err(Box::new(super::errors::NotExist("filename".to_string())));
-        };
-
+    pub async fn add_book(&self, filename: String, filesource: std::path::PathBuf) -> Result<()> {
         if let Some(book_id) = filename.strip_suffix(".txt") {
-            self.add_book_txt(field, filename.clone(), book_id.to_string())
+            self.add_book_txt(filesource, filename.clone(), book_id.to_string())
                 .await?;
             return Ok(());
         } else if let Some(book_id) = filename.strip_suffix(".pdf") {
-            self.add_book_pdf(field, filename.clone(), book_id.to_string())
+            self.add_book_pdf(filesource, filename.clone(), book_id.to_string())
                 .await?;
             return Ok(());
         } else if let Some(book_id) = filename.strip_suffix(".zip") {
-            self.add_book_zip(field, filename.clone(), book_id.to_string())
-                .await?;
+            self.add_book_zip(filesource, book_id.to_string()).await?;
             return Ok(());
         }
 
@@ -347,25 +337,9 @@ impl Voile {
         )))
     }
 
-    async fn download_file_from_multipart(
-        &self,
-        mut field: actix_multipart::Field,
-        filepath: std::path::PathBuf,
-    ) -> Result<()> {
-        let mut f = std::fs::File::create(filepath)?;
-
-        // Field in turn is stream of *Bytes* object
-        while let Some(chunk) = field.try_next().await? {
-            // filesystem operations are blocking, we have to use threadpool
-            f = actix_web::web::block(move || f.write_all(&chunk).map(|_| f)).await??;
-        }
-
-        Ok(())
-    }
-
     async fn add_book_txt(
         &self,
-        field: actix_multipart::Field,
+        filesource: std::path::PathBuf,
         filename: String,
         book_id: String,
     ) -> Result<()> {
@@ -376,12 +350,13 @@ impl Voile {
 
         let filepath = folderpath.join(&filename);
 
-        self.download_file_from_multipart(field, filepath).await
+        std::fs::rename(filesource, filepath)?;
+        Ok(())
     }
 
     async fn add_book_pdf(
         &self,
-        field: actix_multipart::Field,
+        filesource: std::path::PathBuf,
         filename: String,
         book_id: String,
     ) -> Result<()> {
@@ -392,29 +367,18 @@ impl Voile {
 
         let filepath = folderpath.join(filename);
 
-        self.download_file_from_multipart(field, filepath).await
+        std::fs::rename(filesource, filepath)?;
+        Ok(())
     }
 
-    async fn add_book_zip(
-        &self,
-        field: actix_multipart::Field,
-        filename: String,
-        book_id: String,
-    ) -> Result<()> {
+    async fn add_book_zip(&self, filesource: std::path::PathBuf, book_id: String) -> Result<()> {
         let folderpath = self.get_book_dir(&book_id);
 
         // TODO: exception safe
         // prevent same folder_name
         std::fs::create_dir(&folderpath)?;
 
-        let tmp_dir = tempfile::tempdir()?;
-
-        let zip_filepath = tmp_dir.path().join(&filename);
-
-        self.download_file_from_multipart(field, zip_filepath.clone())
-            .await?;
-
-        let zip_file = std::fs::File::open(zip_filepath.clone())?;
+        let zip_file = std::fs::File::open(filesource.clone())?;
         let mut archive = zip::ZipArchive::new(zip_file)?;
 
         for i in 0..archive.len() {
@@ -465,12 +429,11 @@ impl Voile {
     pub async fn set_book_cover(
         &mut self,
         book_id: String,
-        field: actix_multipart::Field,
+        filesource: std::path::PathBuf,
     ) -> Result<()> {
         let filepath = self.get_book_dir(&book_id).join("book_cover.jpg");
 
-        self.download_file_from_multipart(field, filepath).await?;
-
+        std::fs::rename(filesource, filepath)?;
         Ok(())
     }
 

@@ -1,6 +1,7 @@
 use actix_web::{delete, get, post, web, Responder};
 use futures_util::StreamExt as _;
 use futures_util::TryStreamExt;
+use std::io::Write;
 
 use crate::appstate::appstate::SharedAppState;
 use serde::Serialize;
@@ -54,6 +55,21 @@ async fn delete_book(
     Ok(actix_web::HttpResponse::Ok().finish())
 }
 
+async fn download_file_from_multipart(
+    mut field: actix_multipart::Field,
+    filepath: std::path::PathBuf,
+) -> actix_web::Result<()> {
+    let mut f = std::fs::File::create(filepath)?;
+
+    // Field in turn is stream of *Bytes* object
+    while let Some(chunk) = field.try_next().await? {
+        // filesystem operations are blocking, we have to use threadpool
+        f = actix_web::web::block(move || f.write_all(&chunk).map(|_| f)).await??;
+    }
+
+    Ok(())
+}
+
 #[post("/api/books")]
 async fn add_book(
     mut payload: actix_multipart::Multipart,
@@ -61,7 +77,25 @@ async fn add_book(
 ) -> actix_web::Result<actix_web::HttpResponse> {
     while let Some(item) = payload.next().await {
         let field = item?;
-        let res = app_state.lock().unwrap().voile.add_book(field).await;
+
+        let filename = if let Some(filename) = field.content_disposition().get_filename() {
+            filename.to_string()
+        } else {
+            log::warn!("Skip book due to no filename");
+            continue;
+        };
+
+        let tmp_dir = tempfile::tempdir()?;
+        let tmp_filename = tmp_dir.path().join(filename.clone());
+        download_file_from_multipart(field, tmp_filename.clone()).await?;
+
+        let res = app_state
+            .lock()
+            .unwrap()
+            .voile
+            .add_book(filename, tmp_filename)
+            .await;
+
         if let Err(err) = res {
             log::warn!("Skip book due to {}", err);
         }
@@ -94,11 +128,15 @@ async fn set_book_cover(
 ) -> actix_web::Result<actix_web::HttpResponse> {
     let book_id = path.into_inner();
     if let Some(field) = payload.try_next().await? {
+        let tmp_dir = tempfile::tempdir()?;
+        let tmp_filename = tmp_dir.path().join("tmp");
+        download_file_from_multipart(field, tmp_filename.clone()).await?;
+
         app_state
             .lock()
             .unwrap()
             .voile
-            .set_book_cover(book_id, field)
+            .set_book_cover(book_id, tmp_filename)
             .await?;
     }
 
