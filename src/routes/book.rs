@@ -1,7 +1,6 @@
 use actix_web::{delete, get, post, web, Responder};
 use futures_util::StreamExt as _;
 use futures_util::TryStreamExt;
-use std::io::Write;
 
 use crate::appstate::appstate::SharedAppState;
 use serde::Serialize;
@@ -55,21 +54,6 @@ async fn delete_book(
     Ok(actix_web::HttpResponse::Ok().finish())
 }
 
-async fn download_file_from_multipart(
-    mut field: actix_multipart::Field,
-    filepath: std::path::PathBuf,
-) -> actix_web::Result<()> {
-    let mut f = std::fs::File::create(filepath)?;
-
-    // Field in turn is stream of *Bytes* object
-    while let Some(chunk) = field.try_next().await? {
-        // filesystem operations are blocking, we have to use threadpool
-        f = actix_web::web::block(move || f.write_all(&chunk).map(|_| f)).await??;
-    }
-
-    Ok(())
-}
-
 #[post("/api/books")]
 async fn add_book(
     mut payload: actix_multipart::Multipart,
@@ -87,7 +71,7 @@ async fn add_book(
 
         let tmp_dir = tempfile::tempdir()?;
         let tmp_filename = tmp_dir.path().join(filename.clone());
-        download_file_from_multipart(field, tmp_filename.clone()).await?;
+        crate::routes::util::download_file_from_multipart(field, &tmp_filename).await?;
 
         let res = app_state
             .lock()
@@ -130,7 +114,7 @@ async fn set_book_cover(
     if let Some(field) = payload.try_next().await? {
         let tmp_dir = tempfile::tempdir()?;
         let tmp_filename = tmp_dir.path().join("tmp");
-        download_file_from_multipart(field, tmp_filename.clone()).await?;
+        crate::routes::util::download_file_from_multipart(field, &tmp_filename).await?;
 
         app_state
             .lock()

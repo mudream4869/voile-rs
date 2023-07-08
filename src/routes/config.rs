@@ -64,11 +64,15 @@ async fn set_user_avatar(
     app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<actix_web::HttpResponse> {
     if let Some(field) = payload.try_next().await? {
+        let tmp_dir = tempfile::tempdir()?;
+        let tmp_filename = tmp_dir.path().join("tmp");
+        crate::routes::util::download_file_from_multipart(field, &tmp_filename).await?;
+
         app_state
             .lock()
             .unwrap()
             .config_handler
-            .set_user_avatar(field)
+            .set_user_avatar(tmp_filename)
             .await?;
     }
 

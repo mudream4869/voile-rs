@@ -1,16 +1,14 @@
-use std::io::Write;
-
-use futures_util::TryStreamExt;
+use std::path::PathBuf;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub struct ConfigHandler {
-    user_config_filename: std::path::PathBuf,
+    user_config_filename: PathBuf,
     system_config: crate::config::system_config::SystemConfig,
 }
 
 impl ConfigHandler {
-    pub fn new(voile_config_dir: std::path::PathBuf) -> std::io::Result<ConfigHandler> {
+    pub fn new(voile_config_dir: PathBuf) -> std::io::Result<ConfigHandler> {
         let user_config_filename = voile_config_dir.join("user.toml");
 
         let system_config = crate::config::system_config::SystemConfig::from_dir(voile_config_dir)?;
@@ -47,25 +45,15 @@ impl ConfigHandler {
         self.edit_user_config("theme", theme)
     }
 
-    pub fn get_user_avatar_path(&self) -> std::path::PathBuf {
+    pub fn get_user_avatar_path(&self) -> PathBuf {
         [self.system_config.server_data_dir.as_str(), "avatar.png"]
             .iter()
             .collect()
     }
 
-    pub async fn set_user_avatar(&self, mut field: actix_multipart::Field) -> Result<()> {
-        // TODO: refine error
+    pub async fn set_user_avatar(&self, filesource: PathBuf) -> Result<()> {
         let filepath = self.get_user_avatar_path();
-
-        // File::create is blocking operation, use threadpool
-        let mut f = std::fs::File::create(filepath)?;
-
-        // Field in turn is stream of *Bytes* object
-        while let Some(chunk) = field.try_next().await? {
-            // filesystem operations are blocking, we have to use threadpool
-            f = actix_web::web::block(move || f.write_all(&chunk).map(|_| f)).await??;
-        }
-
+        std::fs::rename(filesource, filepath)?;
         Ok(())
     }
 }
