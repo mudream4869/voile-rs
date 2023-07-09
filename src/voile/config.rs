@@ -53,7 +53,7 @@ impl ConfigHandler {
 
     pub async fn set_user_avatar(&self, filesource: PathBuf) -> Result<()> {
         let filepath = self.get_user_avatar_path();
-        std::fs::rename(filesource, filepath)?;
+        crate::voile::util::move_file(filesource, filepath)?;
         Ok(())
     }
 }

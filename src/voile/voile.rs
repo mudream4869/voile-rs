@@ -351,7 +351,7 @@ impl Voile {
 
         let filepath = folderpath.join(&filename);
 
-        std::fs::rename(filesource, filepath)?;
+        crate::voile::util::move_file(filesource, filepath)?;
         Ok(())
     }
 
@@ -368,7 +368,7 @@ impl Voile {
 
         let filepath = folderpath.join(filename);
 
-        std::fs::rename(filesource, filepath)?;
+        crate::voile::util::move_file(filesource, filepath)?;
         Ok(())
     }
 
