@@ -1,16 +1,19 @@
 <template>
   <v-app>
     <v-form class="ma-md-2">
-      <v-file-input accept="text/*, application/zip, application/pdf" multiple :clearable="true" label="txt檔案/zip檔案/pdf檔案"
-        :key="fileInputKey" @change="uploadBook($event)"></v-file-input>
+      <v-file-input accept="text/*, application/zip, application/pdf" multiple label="txt檔案/zip檔案/pdf檔案"
+        :key="fileInputKey" @change="addBook($event)"></v-file-input>
     </v-form>
+    <v-btn @click="uploadBooks()" :disabled="uploadable == 0"> 上傳 </v-btn>
     <div class="ma-md-2">
-      <v-alert color="success" closable text="上傳成功" v-model="alertSuccess"></v-alert>
-      <v-alert color="warning" closable text="上傳失敗" v-model="alertFail"></v-alert>
-      <h2> 可上傳檔案格式 </h2>
-      <h3> txt 檔案 </h3>
-      <h3> zip 檔案 </h3>
-      <h3> pdf 檔案 </h3>
+      <v-list>
+        <v-list-item v-for="item in readyFiles" :key="item.filename" :title="item.filename">
+          <v-alert color="success" text="上傳成功" v-if="item.status == 1"></v-alert>
+          <v-alert color="warning" text="上傳失敗" v-if="item.status == 2"></v-alert>
+        </v-list-item>
+      </v-list>
+
+      <h2> 可上傳檔案格式: txt/zip/pdf </h2>
     </div>
   </v-app>
 </template>
@@ -22,26 +25,72 @@ export default {
       fileInputKey: 0,
       alertFail: false,
       alertSuccess: false,
+
+      readyFiles: [{
+        filename: '',
+        file: null,
+        status: 0, // 0: not upload, 1: success, 2: failure
+      }],
+    }
+  },
+  created() {
+    this.readyFiles = [];
+  },
+  computed: {
+    uploadable() {
+      var cnt = 0
+      for (var readyFile of this.readyFiles) {
+        if (readyFile.status != 1) {
+          cnt += 1
+        }
+      }
+      return cnt
     }
   },
   methods: {
-    uploadBook(event) {
+    addBook(event) {
       if (!event.target.files) {
         return
       }
-      const formData = new FormData();
-      for (var i = 0; i < event.target.files.length; i++) {
-        const avatar_file = event.target.files[i];
-        formData.append('book', avatar_file, avatar_file.name);
+
+      for (var book_file of event.target.files) {
+        this.readyFiles.push({
+          filename: book_file.name,
+          file: book_file,
+          status: 0,
+        })
       }
-      fetch(`api/books`, {
-        method: 'POST',
-        body: formData,
-      }).then(res => {
-        this.fileInputKey++
-        this.alertSuccess = res.status == 200
-        this.alertFail = !this.alertSuccess
-      })
+
+      this.fileInputKey++
+    },
+
+    uploadBooks() {
+      if (this.uploadable == 0) {
+        return
+      }
+
+      for (var readyFile of this.readyFiles) {
+        if (readyFile.status == 1) {
+          continue
+        }
+
+        const formData = new FormData()
+        formData.append('book', readyFile.file, readyFile.filename)
+
+        let filename = readyFile.filename
+
+        fetch(`api/books`, {
+          method: 'POST',
+          body: formData,
+        }).then(res => {
+          var item = this.readyFiles.find(item => item.filename == filename)
+          if (res.status == 200) {
+            item.status = 1
+          } else {
+            item.status = 2
+          }
+        })
+      }
     },
   }
 }

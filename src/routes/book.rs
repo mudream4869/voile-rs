@@ -1,3 +1,4 @@
+use actix_web::error::{ErrorBadRequest, ErrorInternalServerError};
 use actix_web::{delete, get, post, web, Responder};
 use futures_util::StreamExt as _;
 use futures_util::TryStreamExt;
@@ -59,14 +60,15 @@ async fn add_book(
     mut payload: actix_multipart::Multipart,
     app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<actix_web::HttpResponse> {
-    while let Some(item) = payload.next().await {
+    if let Some(item) = payload.next().await {
         let field = item?;
 
         let filename = if let Some(filename) = field.content_disposition().get_filename() {
             filename.to_string()
         } else {
-            log::warn!("Skip book due to no filename");
-            continue;
+            return Err(ErrorBadRequest(crate::voile::errors::NotExist(
+                "filename".to_string(),
+            )));
         };
 
         let tmp_dir = tempfile::tempdir()?;
@@ -81,11 +83,15 @@ async fn add_book(
             .await;
 
         if let Err(err) = res {
-            log::warn!("Skip book due to {}", err);
+            return Err(ErrorInternalServerError(err));
         }
+
+        return Ok(actix_web::HttpResponse::Ok().finish());
     }
 
-    Ok(actix_web::HttpResponse::Ok().finish())
+    return Err(ErrorBadRequest(crate::voile::errors::NotExist(
+        "file".to_string(),
+    )));
 }
 
 #[get("/api/books/{book_id}/book_cover")]
