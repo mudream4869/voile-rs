@@ -1,5 +1,23 @@
 <template>
   <v-app tabindex="0" @keyup.arrow-left="previous_content" @keyup.arrow-right="next_content">
+    <v-dialog v-model="configDialog">
+      <v-card>
+        <v-card-text>
+          <v-slider min="60" max="100" step="4" show-ticks v-model="config.imageSize">
+            <template v-slot:prepend>
+              Image Width:
+            </template>
+            <template v-slot:append>
+              {{ config.imageSize }} %
+            </template>
+          </v-slider>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="primary" block @click="configDialog = false">Close Dialog</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <div v-if="is_text" class="ma-md-2" style="font-size: 40px;">
       <h1> {{ content_title }} </h1>
       <div v-if="paging_max > 1">
@@ -19,9 +37,9 @@
       </div>
     </div>
     <div v-if="is_image" class="mx-auto">
-      <img :src="content_src_url" />
+      <v-img :width="config.imageSize + 'vw'" :src="content_src_url" @dblclick="configDialog = true"></v-img>
       <!-- prefetch next image -->
-      <img :src="next_content_src_url" hidden />
+      <v-img :src="next_content_src_url" hidden></v-img>
     </div>
   </v-app>
 </template>
@@ -59,6 +77,11 @@ export default {
       // paging in [0, paging_max)
       paging: 0,
       paging_max: 1,
+
+      configDialog: false,
+      config: {
+        imageSize: 90,
+      },
     }
   },
   computed: {
