@@ -9,7 +9,7 @@
       <v-list>
         <v-list-item v-for="item in readyFiles" :key="item.filename" :title="item.filename">
           <v-alert color="success" text="上傳成功" v-if="item.status == 1"></v-alert>
-          <v-alert color="warning" text="上傳失敗" v-if="item.status == 2"></v-alert>
+          <v-alert color="warning" :text="'上傳失敗: ' + item.error_log" v-if="item.status == 2"></v-alert>
         </v-list-item>
       </v-list>
 
@@ -30,6 +30,7 @@ export default {
         filename: '',
         file: null,
         status: 0, // 0: not upload, 1: success, 2: failure
+        error_log: '',
       }],
     }
   },
@@ -58,13 +59,14 @@ export default {
           filename: book_file.name,
           file: book_file,
           status: 0,
+          error_log: '',
         })
       }
 
       this.fileInputKey++
     },
 
-    uploadBooks() {
+    async uploadBooks() {
       if (this.uploadable == 0) {
         return
       }
@@ -82,12 +84,13 @@ export default {
         fetch(`api/books`, {
           method: 'POST',
           body: formData,
-        }).then(res => {
+        }).then(async res => {
           var item = this.readyFiles.find(item => item.filename == filename)
           if (res.status == 200) {
             item.status = 1
           } else {
             item.status = 2
+            item.error_log = await res.text();
           }
         })
       }
