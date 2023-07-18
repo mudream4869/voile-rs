@@ -110,6 +110,8 @@ pub struct Voile {
 
     book_cache: std::collections::HashMap<String, Book>,
     db_conn: std::sync::Mutex<sqlite::Connection>,
+
+    book_id_retry_number: i32,
 }
 
 fn is_image(file_path: &str) -> bool {
@@ -132,6 +134,7 @@ impl Voile {
             books_dir: books_dir,
             book_cache: std::collections::HashMap::new(),
             db_conn: std::sync::Mutex::new(db_conn),
+            book_id_retry_number: 100,
         };
 
         ret.init()?;
@@ -222,7 +225,7 @@ impl Voile {
     }
 
     fn get_book_dir(&self, book_id: &str) -> PathBuf {
-        [self.books_dir.as_str(), book_id].iter().collect()
+        [&self.books_dir, book_id].iter().collect()
     }
 
     pub fn get_book(&mut self, book_id: &str) -> Result<Book> {
@@ -341,11 +344,30 @@ impl Voile {
         )))
     }
 
-    async fn add_book_txt(&self, filesource: PathBuf, filename: &str, book_id: &str) -> Result<()> {
-        let folderpath = self.get_book_dir(book_id);
+    fn create_valid_book_id(&self, base_book_id: &str) -> Result<String> {
+        {
+            let folderpath = self.get_book_dir(base_book_id);
+            if std::fs::create_dir(&folderpath).is_ok() {
+                return Ok(base_book_id.to_string());
+            }
+        }
 
-        // prevent same folder_name
-        std::fs::create_dir(&folderpath)?;
+        for i in 0..self.book_id_retry_number {
+            let try_book_id: String = format!("{}_{}", base_book_id, i);
+            let folderpath = self.get_book_dir(&try_book_id);
+            if std::fs::create_dir(&folderpath).is_ok() {
+                return Ok(try_book_id.to_string());
+            }
+        }
+
+        Err(Box::new(super::errors::NotExist(
+            "valid book id".to_string(),
+        )))
+    }
+
+    async fn add_book_txt(&self, filesource: PathBuf, filename: &str, book_id: &str) -> Result<()> {
+        let valid_book_id = self.create_valid_book_id(book_id)?;
+        let folderpath = self.get_book_dir(&valid_book_id);
 
         let filepath = folderpath.join(filename);
 
@@ -354,10 +376,8 @@ impl Voile {
     }
 
     async fn add_book_pdf(&self, filesource: PathBuf, filename: &str, book_id: &str) -> Result<()> {
-        let folderpath = self.get_book_dir(book_id);
-
-        // prevent same folder_name
-        std::fs::create_dir(&folderpath)?;
+        let valid_book_id = self.create_valid_book_id(book_id)?;
+        let folderpath = self.get_book_dir(&valid_book_id);
 
         let filepath = folderpath.join(filename);
 
@@ -366,11 +386,10 @@ impl Voile {
     }
 
     async fn add_book_zip(&self, filesource: PathBuf, book_id: &str) -> Result<()> {
-        let folderpath = self.get_book_dir(book_id);
+        let valid_book_id = self.create_valid_book_id(book_id)?;
+        let folderpath = self.get_book_dir(&valid_book_id);
 
         // TODO: exception safe
-        // prevent same folder_name
-        std::fs::create_dir(&folderpath)?;
 
         let zip_file = std::fs::File::open(filesource.clone())?;
         let mut archive = zip::ZipArchive::new(zip_file)?;
