@@ -102,6 +102,9 @@ impl BookProc {
     }
 }
 
+const DETAIL_FILENAME: &str = "details.json";
+const BOOK_COVER_FILENAME: &str = "book_cover.jpg";
+
 pub struct Voile {
     books_dir: String,
 
@@ -247,14 +250,14 @@ impl Voile {
 
             let filename = entry.file_name().to_str().unwrap().to_string();
 
-            if filename == "details.json" {
+            if filename == DETAIL_FILENAME {
                 default_modified_time = entry
                     .metadata()?
                     .modified()?
                     .duration_since(std::time::SystemTime::UNIX_EPOCH)?
                     .as_secs();
                 continue;
-            } else if filename == "book_cover.jpg" {
+            } else if filename == BOOK_COVER_FILENAME {
                 default_book_cover = Some(filename);
                 continue;
             } else if filename.starts_with('.') {
@@ -284,7 +287,7 @@ impl Voile {
         };
 
         // details.json is optional
-        let detail_filename = book_dir.join("details.json");
+        let detail_filename = book_dir.join(DETAIL_FILENAME);
 
         if let Ok(book_detail) = BookDetails::from_filename(detail_filename) {
             book.apply_book_detail(book_detail);
@@ -426,7 +429,7 @@ impl Voile {
     }
 
     pub async fn set_book_cover(&mut self, book_id: &str, filesource: PathBuf) -> Result<()> {
-        let filepath = self.get_book_dir(book_id).join("book_cover.jpg");
+        let filepath = self.get_book_dir(book_id).join(BOOK_COVER_FILENAME);
 
         std::fs::rename(filesource, filepath)?;
         Ok(())
@@ -439,7 +442,7 @@ impl Voile {
         let cur_book = self.book_cache.get_mut(&book_id_string).unwrap();
         cur_book.apply_book_detail(book_detail.clone());
 
-        let detail_filename = self.get_book_dir(book_id).join("details.json");
+        let detail_filename = self.get_book_dir(book_id).join(DETAIL_FILENAME);
 
         book_detail.write_to_filename(detail_filename)?;
         Ok(())
