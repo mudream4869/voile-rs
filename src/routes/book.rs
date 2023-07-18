@@ -38,7 +38,7 @@ async fn get_book(
 ) -> actix_web::Result<impl Responder> {
     let book_id = path.into_inner();
 
-    let book = app_state.lock().unwrap().voile.get_book(book_id)?;
+    let book = app_state.lock().unwrap().voile.get_book(book_id.as_str())?;
 
     Ok(web::Json(book))
 }
@@ -50,7 +50,11 @@ async fn delete_book(
 ) -> actix_web::Result<actix_web::HttpResponse> {
     let book_id = path.into_inner();
 
-    app_state.lock().unwrap().voile.delete_book(book_id)?;
+    app_state
+        .lock()
+        .unwrap()
+        .voile
+        .delete_book(book_id.as_str())?;
 
     Ok(actix_web::HttpResponse::Ok().finish())
 }
@@ -105,7 +109,7 @@ async fn get_book_cover(
         .lock()
         .unwrap()
         .voile
-        .get_book_cover_path(book_id)?;
+        .get_book_cover_path(book_id.as_str())?;
 
     Ok(actix_files::NamedFile::open(book_cover_path)?)
 }
@@ -126,7 +130,7 @@ async fn set_book_cover(
             .lock()
             .unwrap()
             .voile
-            .set_book_cover(book_id, tmp_filename)
+            .set_book_cover(book_id.as_str(), tmp_filename)
             .await?;
     }
 
@@ -145,7 +149,7 @@ async fn set_book_detail(
         .lock()
         .unwrap()
         .voile
-        .set_book_detail(book_id, book_detail.0)?;
+        .set_book_detail(book_id.as_str(), book_detail.0)?;
 
     Ok(actix_web::HttpResponse::Ok().finish())
 }
@@ -161,7 +165,7 @@ async fn get_book_content(
         .lock()
         .unwrap()
         .voile
-        .get_book_content_path(book_id, content_idx)?;
+        .get_book_content_path(book_id.as_str(), content_idx)?;
 
     Ok(actix_files::NamedFile::open(content_path)?)
 }
@@ -173,7 +177,11 @@ async fn get_book_proc(
 ) -> actix_web::Result<impl Responder> {
     let book_id = path.into_inner();
 
-    let book_proc = app_state.lock().unwrap().voile.get_book_proc(book_id)?;
+    let book_proc = app_state
+        .lock()
+        .unwrap()
+        .voile
+        .get_book_proc(book_id.as_str())?;
 
     Ok(web::Json(book_proc))
 }
@@ -190,7 +198,7 @@ async fn set_book_proc(
         .lock()
         .unwrap()
         .voile
-        .set_book_proc(book_id, &book_proc.0)?;
+        .set_book_proc(book_id.as_str(), &book_proc.0)?;
 
     Ok(book_proc)
 }

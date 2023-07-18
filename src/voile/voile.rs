@@ -148,11 +148,11 @@ impl Voile {
         Ok(())
     }
 
-    pub fn get_book_proc(&self, book_id: String) -> Result<BookProc> {
+    pub fn get_book_proc(&self, book_id: &str) -> Result<BookProc> {
         let db_conn = self.db_conn.lock().unwrap();
         let query = "SELECT content_idx, paging FROM book_read_proc WHERE book_id = :book_id";
         let mut statement = db_conn.prepare(query)?;
-        statement.bind::<&[(_, sqlite::Value)]>(&[(":book_id", book_id.clone().into())][..])?;
+        statement.bind::<&[(_, sqlite::Value)]>(&[(":book_id", book_id.into())][..])?;
 
         let s = statement.next()?;
 
@@ -163,10 +163,12 @@ impl Voile {
             });
         }
 
-        Err(Box::new(super::errors::BookIDNotFoundError(book_id)))
+        Err(Box::new(super::errors::BookIDNotFoundError(
+            book_id.to_string(),
+        )))
     }
 
-    pub fn set_book_proc(&self, book_id: String, book_proc: &BookProc) -> Result<()> {
+    pub fn set_book_proc(&self, book_id: &str, book_proc: &BookProc) -> Result<()> {
         let db_conn = self.db_conn.lock().unwrap();
         let query = r#"
             INSERT INTO book_read_proc (book_id, content_idx, paging)
@@ -208,7 +210,7 @@ impl Voile {
                 continue;
             }
 
-            match self.get_book(book_id) {
+            match self.get_book(&book_id) {
                 Ok(book) => ret.push(book),
                 Err(_) => {}
             }
@@ -216,17 +218,17 @@ impl Voile {
         Ok(ret)
     }
 
-    fn get_book_dir(&self, book_id: &String) -> PathBuf {
-        [self.books_dir.as_str(), book_id.as_str()].iter().collect()
+    fn get_book_dir(&self, book_id: &str) -> PathBuf {
+        [self.books_dir.as_str(), book_id].iter().collect()
     }
 
-    pub fn get_book(&mut self, book_id: String) -> Result<Book> {
-        if let Some(book) = self.book_cache.get(&book_id) {
+    pub fn get_book(&mut self, book_id: &str) -> Result<Book> {
+        if let Some(book) = self.book_cache.get(book_id) {
             return Ok(book.clone());
         }
 
         // TODO: dir safety check
-        let book_dir = self.get_book_dir(&book_id);
+        let book_dir = self.get_book_dir(book_id);
 
         let default_created_time = std::fs::metadata(book_dir.clone())?
             .created()?
@@ -268,8 +270,8 @@ impl Voile {
         let local_path = Path::new(&book_dir).absolutize().unwrap();
 
         let mut book = Book {
-            book_id: book_id.clone(),
-            title: book_id.clone(),
+            book_id: book_id.to_string(),
+            title: book_id.to_string(),
             content_titles,
             author: None,
             tags: None,
@@ -303,33 +305,33 @@ impl Voile {
             }
         }
 
-        self.book_cache.insert(book_id.clone(), book.clone());
+        self.book_cache.insert(book_id.to_string(), book.clone());
         Ok(book)
     }
 
-    pub fn delete_book(&mut self, book_id: String) -> Result<()> {
-        if self.book_cache.get(&book_id).is_none() {
+    pub fn delete_book(&mut self, book_id: &str) -> Result<()> {
+        if self.book_cache.get(book_id).is_none() {
             return Ok(());
         }
 
-        std::fs::remove_dir_all(self.get_book_dir(&book_id))?;
+        std::fs::remove_dir_all(self.get_book_dir(book_id))?;
 
-        self.book_cache.remove(&book_id);
+        self.book_cache.remove(book_id);
 
         Ok(())
     }
 
     pub async fn add_book(&self, filename: String, filesource: PathBuf) -> Result<()> {
         if let Some(book_id) = filename.strip_suffix(".txt") {
-            self.add_book_txt(filesource, filename.clone(), book_id.to_string())
+            self.add_book_txt(filesource, filename.clone(), book_id)
                 .await?;
             return Ok(());
         } else if let Some(book_id) = filename.strip_suffix(".pdf") {
-            self.add_book_pdf(filesource, filename.clone(), book_id.to_string())
+            self.add_book_pdf(filesource, filename.clone(), book_id)
                 .await?;
             return Ok(());
         } else if let Some(book_id) = filename.strip_suffix(".zip") {
-            self.add_book_zip(filesource, book_id.to_string()).await?;
+            self.add_book_zip(filesource, book_id).await?;
             return Ok(());
         }
 
@@ -342,9 +344,9 @@ impl Voile {
         &self,
         filesource: PathBuf,
         filename: String,
-        book_id: String,
+        book_id: &str,
     ) -> Result<()> {
-        let folderpath = self.get_book_dir(&book_id);
+        let folderpath = self.get_book_dir(book_id);
 
         // prevent same folder_name
         std::fs::create_dir(&folderpath)?;
@@ -359,9 +361,9 @@ impl Voile {
         &self,
         filesource: PathBuf,
         filename: String,
-        book_id: String,
+        book_id: &str,
     ) -> Result<()> {
-        let folderpath = self.get_book_dir(&book_id);
+        let folderpath = self.get_book_dir(book_id);
 
         // prevent same folder_name
         std::fs::create_dir(&folderpath)?;
@@ -372,8 +374,8 @@ impl Voile {
         Ok(())
     }
 
-    async fn add_book_zip(&self, filesource: PathBuf, book_id: String) -> Result<()> {
-        let folderpath = self.get_book_dir(&book_id);
+    async fn add_book_zip(&self, filesource: PathBuf, book_id: &str) -> Result<()> {
+        let folderpath = self.get_book_dir(book_id);
 
         // TODO: exception safe
         // prevent same folder_name
@@ -399,11 +401,7 @@ impl Voile {
         Ok(())
     }
 
-    pub fn get_book_content_path(
-        &mut self,
-        book_id: String,
-        content_idx: usize,
-    ) -> Result<PathBuf> {
+    pub fn get_book_content_path(&mut self, book_id: &str, content_idx: usize) -> Result<PathBuf> {
         // TODO: dir safety check
         let book = self.get_book(book_id.clone())?;
         let content_id = match book.content_titles.get(content_idx) {
@@ -414,9 +412,9 @@ impl Voile {
         Ok(self.get_book_dir(&book_id).join(content_id))
     }
 
-    pub fn get_book_cover_path(&mut self, book_id: String) -> Result<PathBuf> {
+    pub fn get_book_cover_path(&mut self, book_id: &str) -> Result<PathBuf> {
         // TODO: dir safety check
-        let book = self.get_book(book_id.clone())?;
+        let book = self.get_book(book_id)?;
 
         let book_cover = if let Some(book_cover) = book.book_cover {
             book_cover
@@ -427,20 +425,21 @@ impl Voile {
         Ok(self.get_book_dir(&book_id).join(book_cover))
     }
 
-    pub async fn set_book_cover(&mut self, book_id: String, filesource: PathBuf) -> Result<()> {
-        let filepath = self.get_book_dir(&book_id).join("book_cover.jpg");
+    pub async fn set_book_cover(&mut self, book_id: &str, filesource: PathBuf) -> Result<()> {
+        let filepath = self.get_book_dir(book_id).join("book_cover.jpg");
 
         std::fs::rename(filesource, filepath)?;
         Ok(())
     }
 
-    pub fn set_book_detail(&mut self, book_id: String, book_detail: BookDetails) -> Result<()> {
-        self.get_book(book_id.clone())?;
+    pub fn set_book_detail(&mut self, book_id: &str, book_detail: BookDetails) -> Result<()> {
+        self.get_book(book_id)?;
 
-        let cur_book = self.book_cache.get_mut(&book_id).unwrap();
+        let book_id_string = book_id.to_string();
+        let cur_book = self.book_cache.get_mut(&book_id_string).unwrap();
         cur_book.apply_book_detail(book_detail.clone());
 
-        let detail_filename = self.get_book_dir(&book_id).join("details.json");
+        let detail_filename = self.get_book_dir(book_id).join("details.json");
 
         book_detail.write_to_filename(detail_filename)?;
         Ok(())
