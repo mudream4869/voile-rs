@@ -76,14 +76,14 @@ async fn add_book(
         };
 
         let tmp_dir = tempfile::tempdir()?;
-        let tmp_filename = tmp_dir.path().join(filename.clone());
+        let tmp_filename = tmp_dir.path().join(filename.as_str());
         crate::routes::util::download_file_from_multipart(field, &tmp_filename).await?;
 
         let res = app_state
             .lock()
             .unwrap()
             .voile
-            .add_book(filename, tmp_filename)
+            .add_book(filename.as_str(), tmp_filename)
             .await;
 
         if let Err(err) = res {

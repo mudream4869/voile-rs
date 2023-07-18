@@ -233,7 +233,7 @@ impl Voile {
         // TODO: dir safety check
         let book_dir = self.get_book_dir(book_id);
 
-        let default_created_time = std::fs::metadata(book_dir.clone())?
+        let default_created_time = std::fs::metadata(&book_dir)?
             .created()?
             .duration_since(std::time::SystemTime::UNIX_EPOCH)?
             .as_secs();
@@ -241,7 +241,7 @@ impl Voile {
         let mut default_book_cover: Option<String> = None;
 
         let mut content_titles = vec![];
-        for path in std::fs::read_dir(book_dir.clone())? {
+        for path in std::fs::read_dir(&book_dir)? {
             let entry = path?;
 
             if !entry.file_type()?.is_file() {
@@ -324,14 +324,12 @@ impl Voile {
         Ok(())
     }
 
-    pub async fn add_book(&self, filename: String, filesource: PathBuf) -> Result<()> {
+    pub async fn add_book(&self, filename: &str, filesource: PathBuf) -> Result<()> {
         if let Some(book_id) = filename.strip_suffix(".txt") {
-            self.add_book_txt(filesource, filename.clone(), book_id)
-                .await?;
+            self.add_book_txt(filesource, filename, book_id).await?;
             return Ok(());
         } else if let Some(book_id) = filename.strip_suffix(".pdf") {
-            self.add_book_pdf(filesource, filename.clone(), book_id)
-                .await?;
+            self.add_book_pdf(filesource, filename, book_id).await?;
             return Ok(());
         } else if let Some(book_id) = filename.strip_suffix(".zip") {
             self.add_book_zip(filesource, book_id).await?;
@@ -343,29 +341,19 @@ impl Voile {
         )))
     }
 
-    async fn add_book_txt(
-        &self,
-        filesource: PathBuf,
-        filename: String,
-        book_id: &str,
-    ) -> Result<()> {
+    async fn add_book_txt(&self, filesource: PathBuf, filename: &str, book_id: &str) -> Result<()> {
         let folderpath = self.get_book_dir(book_id);
 
         // prevent same folder_name
         std::fs::create_dir(&folderpath)?;
 
-        let filepath = folderpath.join(&filename);
+        let filepath = folderpath.join(filename);
 
         crate::voile::util::move_file(filesource, filepath)?;
         Ok(())
     }
 
-    async fn add_book_pdf(
-        &self,
-        filesource: PathBuf,
-        filename: String,
-        book_id: &str,
-    ) -> Result<()> {
+    async fn add_book_pdf(&self, filesource: PathBuf, filename: &str, book_id: &str) -> Result<()> {
         let folderpath = self.get_book_dir(book_id);
 
         // prevent same folder_name
