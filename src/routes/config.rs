@@ -31,7 +31,7 @@ async fn set_user_config(
             .lock()
             .unwrap()
             .config_handler
-            .set_user_name(user_config.name.clone())?;
+            .set_user_name(&user_config.name)?;
     }
 
     if !user_config.theme.is_empty() {
@@ -39,7 +39,7 @@ async fn set_user_config(
             .lock()
             .unwrap()
             .config_handler
-            .set_user_theme(user_config.theme.clone())?;
+            .set_user_theme(&user_config.theme)?;
     }
 
     Ok(actix_web::HttpResponse::Ok().finish())

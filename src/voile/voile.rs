@@ -64,24 +64,24 @@ pub struct Book {
 }
 
 impl Book {
-    pub fn apply_book_detail(&mut self, book_detail: BookDetails) {
-        if let Some(title) = book_detail.title {
+    pub fn apply_book_detail(&mut self, book_detail: &BookDetails) {
+        if let Some(title) = book_detail.title.clone() {
             self.title = title;
         }
 
-        if let Some(author) = book_detail.author {
+        if let Some(author) = book_detail.author.clone() {
             self.author = Some(author);
         }
 
-        if let Some(tags) = book_detail.tags {
+        if let Some(tags) = book_detail.tags.clone() {
             self.tags = Some(tags);
         }
 
-        if let Some(book_cover) = book_detail.book_cover {
+        if let Some(book_cover) = book_detail.book_cover.clone() {
             self.book_cover = Some(book_cover)
         }
 
-        if let Some(book_type) = book_detail.book_type {
+        if let Some(book_type) = book_detail.book_type.clone() {
             self.book_type = Some(book_type)
         }
     }
@@ -293,7 +293,7 @@ impl Voile {
         let detail_filename = book_dir.join(DETAIL_FILENAME);
 
         if let Ok(book_detail) = BookDetails::from_filename(detail_filename) {
-            book.apply_book_detail(book_detail);
+            book.apply_book_detail(&book_detail);
         }
 
         if book.book_cover.is_none() {
@@ -413,7 +413,7 @@ impl Voile {
 
     pub fn get_book_content_path(&mut self, book_id: &str, content_idx: usize) -> Result<PathBuf> {
         // TODO: dir safety check
-        let book = self.get_book(book_id.clone())?;
+        let book = self.get_book(book_id)?;
         let content_id = match book.content_titles.get(content_idx) {
             Some(s) => s,
             None => return Err(Box::new(super::errors::IndexOutOfRange(content_idx))),
@@ -447,7 +447,7 @@ impl Voile {
 
         let book_id_string = book_id.to_string();
         let cur_book = self.book_cache.get_mut(&book_id_string).unwrap();
-        cur_book.apply_book_detail(book_detail.clone());
+        cur_book.apply_book_detail(&book_detail);
 
         let detail_filename = self.get_book_dir(book_id).join(DETAIL_FILENAME);
 

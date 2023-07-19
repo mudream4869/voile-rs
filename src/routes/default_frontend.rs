@@ -27,7 +27,7 @@ async fn favicon() -> impl Responder {
 
 #[actix_web::get("/assets/{_:.*}")]
 async fn assets(path: web::Path<String>) -> impl Responder {
-    handle_embedded_file(format!("assets/{}", path).as_str())
+    handle_embedded_file(&format!("assets/{}", path))
 }
 
 pub fn configure(cfg: &mut web::ServiceConfig) {

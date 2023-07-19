@@ -52,7 +52,7 @@ impl SystemConfig {
         let default_data_dir = voile_config_dir.join("books");
 
         let config_str = std::fs::read_to_string(voile_config_dir.join("system.toml"))?;
-        let mut config: SystemConfig = toml::from_str(config_str.as_str())?;
+        let mut config: SystemConfig = toml::from_str(&config_str)?;
 
         if config.server_data_dir.is_empty() {
             config.server_data_dir = default_server_data_dir.to_str().unwrap().to_string();

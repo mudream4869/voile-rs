@@ -23,14 +23,12 @@ fn main() -> std::io::Result<()> {
             }
         }
     } else if args.len() == 2 {
-        voile_config_dir = std::path::PathBuf::from(args[1].as_str());
+        voile_config_dir = std::path::PathBuf::from(&args[1]);
     } else {
         return Err(std::io::Error::new(std::io::ErrorKind::Other, ""));
     }
 
-    let config_dir = std::path::Path::new(&voile_config_dir)
-        .absolutize()
-        .unwrap();
+    let config_dir = voile_config_dir.as_path().absolutize().unwrap();
 
     config::config::prepare_config_dir(std::path::PathBuf::from(config_dir.clone()))?;
 
@@ -49,7 +47,7 @@ async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
             .unwrap(),
     ));
 
-    let serve_url = format!("http://{}:{}", conf.ip.clone(), conf.port);
+    let serve_url = format!("http://{}:{}", &conf.ip, conf.port);
 
     log::info!("Listen on: {}", serve_url);
 
@@ -63,7 +61,7 @@ async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
         if conf.frontend_dir.is_empty() {
             app.configure(routes::default_frontend::configure)
         } else {
-            app.configure(|s| routes::userdefine_frontend::configure(s, conf.frontend_dir.clone()))
+            app.configure(|s| routes::userdefine_frontend::configure(s, &conf.frontend_dir))
         }
     })
     .bind((conf.ip, conf.port))?

@@ -38,7 +38,7 @@ async fn get_book(
 ) -> actix_web::Result<impl Responder> {
     let book_id = path.into_inner();
 
-    let book = app_state.lock().unwrap().voile.get_book(book_id.as_str())?;
+    let book = app_state.lock().unwrap().voile.get_book(&book_id)?;
 
     Ok(web::Json(book))
 }
@@ -50,11 +50,7 @@ async fn delete_book(
 ) -> actix_web::Result<actix_web::HttpResponse> {
     let book_id = path.into_inner();
 
-    app_state
-        .lock()
-        .unwrap()
-        .voile
-        .delete_book(book_id.as_str())?;
+    app_state.lock().unwrap().voile.delete_book(&book_id)?;
 
     Ok(actix_web::HttpResponse::Ok().finish())
 }
@@ -76,14 +72,14 @@ async fn add_book(
         };
 
         let tmp_dir = tempfile::tempdir()?;
-        let tmp_filename = tmp_dir.path().join(filename.as_str());
+        let tmp_filename = tmp_dir.path().join(&filename);
         crate::routes::util::download_file_from_multipart(field, &tmp_filename).await?;
 
         let res = app_state
             .lock()
             .unwrap()
             .voile
-            .add_book(filename.as_str(), tmp_filename)
+            .add_book(&filename, tmp_filename)
             .await;
 
         if let Err(err) = res {
@@ -109,7 +105,7 @@ async fn get_book_cover(
         .lock()
         .unwrap()
         .voile
-        .get_book_cover_path(book_id.as_str())?;
+        .get_book_cover_path(&book_id)?;
 
     Ok(actix_files::NamedFile::open(book_cover_path)?)
 }
@@ -130,7 +126,7 @@ async fn set_book_cover(
             .lock()
             .unwrap()
             .voile
-            .set_book_cover(book_id.as_str(), tmp_filename)
+            .set_book_cover(&book_id, tmp_filename)
             .await?;
     }
 
@@ -149,7 +145,7 @@ async fn set_book_detail(
         .lock()
         .unwrap()
         .voile
-        .set_book_detail(book_id.as_str(), book_detail.0)?;
+        .set_book_detail(&book_id, book_detail.0)?;
 
     Ok(actix_web::HttpResponse::Ok().finish())
 }
@@ -165,7 +161,7 @@ async fn get_book_content(
         .lock()
         .unwrap()
         .voile
-        .get_book_content_path(book_id.as_str(), content_idx)?;
+        .get_book_content_path(&book_id, content_idx)?;
 
     Ok(actix_files::NamedFile::open(content_path)?)
 }
@@ -177,11 +173,7 @@ async fn get_book_proc(
 ) -> actix_web::Result<impl Responder> {
     let book_id = path.into_inner();
 
-    let book_proc = app_state
-        .lock()
-        .unwrap()
-        .voile
-        .get_book_proc(book_id.as_str())?;
+    let book_proc = app_state.lock().unwrap().voile.get_book_proc(&book_id)?;
 
     Ok(web::Json(book_proc))
 }
@@ -198,7 +190,7 @@ async fn set_book_proc(
         .lock()
         .unwrap()
         .voile
-        .set_book_proc(book_id.as_str(), &book_proc.0)?;
+        .set_book_proc(&book_id, &book_proc.0)?;
 
     Ok(book_proc)
 }

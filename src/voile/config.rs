@@ -29,7 +29,7 @@ impl ConfigHandler {
         self.system_config.clone()
     }
 
-    fn edit_user_config(&self, key: &str, value: String) -> Result<()> {
+    fn edit_user_config(&self, key: &str, value: &str) -> Result<()> {
         let config_str = std::fs::read_to_string(&self.user_config_filename)?;
         let mut doc: toml_edit::Document = config_str.parse()?;
         doc[key] = toml_edit::value(value);
@@ -37,16 +37,16 @@ impl ConfigHandler {
         Ok(())
     }
 
-    pub fn set_user_name(&self, name: String) -> Result<()> {
+    pub fn set_user_name(&self, name: &str) -> Result<()> {
         self.edit_user_config("name", name)
     }
 
-    pub fn set_user_theme(&self, theme: String) -> Result<()> {
+    pub fn set_user_theme(&self, theme: &str) -> Result<()> {
         self.edit_user_config("theme", theme)
     }
 
     pub fn get_user_avatar_path(&self) -> PathBuf {
-        [self.system_config.server_data_dir.as_str(), "avatar.png"]
+        [&self.system_config.server_data_dir, "avatar.png"]
             .iter()
             .collect()
     }
