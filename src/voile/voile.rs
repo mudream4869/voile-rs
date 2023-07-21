@@ -442,7 +442,9 @@ impl Voile {
     pub async fn set_book_cover(&mut self, book_id: &str, filesource: PathBuf) -> Result<()> {
         let filepath = self.get_book_dir(book_id).join(BOOK_COVER_FILENAME);
 
-        std::fs::rename(filesource, filepath)?;
+        crate::voile::util::move_file(filesource, filepath)?;
+        self.book_cache.remove(book_id);
+
         Ok(())
     }
 
