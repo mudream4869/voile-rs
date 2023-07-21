@@ -366,12 +366,16 @@ impl Voile {
     }
 
     async fn add_book_txt(&self, filesource: PathBuf, filename: &str, book_id: &str) -> Result<()> {
+        let tmp_dir = tempfile::tempdir()?;
+        let tmp_filename = tmp_dir.path().join("tmp");
+        super::util::encode_to_utf8(filesource, &tmp_filename)?;
+
         let valid_book_id = self.create_valid_book_id(book_id)?;
         let folderpath = self.get_book_dir(&valid_book_id);
 
         let filepath = folderpath.join(filename);
 
-        crate::voile::util::move_file(filesource, filepath)?;
+        crate::voile::util::move_file(tmp_filename, filepath)?;
         Ok(())
     }
 

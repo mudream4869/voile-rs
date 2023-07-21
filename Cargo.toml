@@ -25,6 +25,8 @@ dirs = "5.0"
 toml_edit = "0.19"
 path-absolutize = "3.1"
 open = "4"
+chardet = "0.2.4"
+encoding = "0.2.33"
 
 [[bin]]
 name = "app"
