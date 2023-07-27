@@ -39,7 +39,6 @@
           <v-form class="ma-md-2">
             <v-select label="主題" :items="['light', 'dark']" @update:modelValue="updateUserTheme"
               v-model="user_config.theme"></v-select>
-            <v-text-field label="小說字體大小"></v-text-field>
           </v-form>
         </v-expansion-panel-text>
       </v-expansion-panel>
