@@ -11,6 +11,14 @@
               {{ config.imageSize }} %
             </template>
           </v-slider>
+          <v-slider min="20" max="100" step="10" show-ticks v-model="config.fontSize">
+            <template v-slot:prepend>
+              Font Size:
+            </template>
+            <template v-slot:append>
+              {{ config.fontSize }} px
+            </template>
+          </v-slider>
         </v-card-text>
         <v-card-actions>
           <v-btn color="primary" block @click="configDialog = false">Close Dialog</v-btn>
@@ -18,7 +26,7 @@
       </v-card>
     </v-dialog>
 
-    <div v-if="is_text" class="ma-md-2" style="font-size: 40px;">
+    <div v-if="is_text" class="ma-md-2" :style="'font-size:' + config.fontSize + 'px;'" @dblclick="configDialog = true">
       <h1> {{ content_title }} </h1>
       <div v-if="paging_max > 1">
         <v-pagination @update:modelValue="updatePaging" v-model="paging" :length="paging_max" :start="0"
@@ -81,6 +89,7 @@ export default {
       configDialog: false,
       config: {
         imageSize: 90,
+        fontSize: 40,
       },
     }
   },
