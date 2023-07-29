@@ -224,8 +224,33 @@ impl Voile {
         Ok(ret)
     }
 
-    fn get_book_dir(&self, book_id: &str) -> PathBuf {
-        [&self.books_dir, book_id].iter().collect()
+    fn get_book_dir(&self, book_id: &str) -> Result<PathBuf> {
+        let book_dir: PathBuf = [&self.books_dir, book_id].iter().collect();
+
+        let abs_dir: PathBuf = match book_dir.as_path().absolutize() {
+            Ok(p) => p.into(),
+            Err(e) => {
+                return Err(Box::new(e));
+            }
+        };
+
+        let abs_dir_str = match abs_dir.to_str() {
+            Some(v) => v,
+            None => {
+                return Err(Box::new(super::errors::NotExist(
+                    "invalid encoding".to_string(),
+                )));
+            },
+        };
+
+        if abs_dir_str.starts_with(&self.books_dir) {
+            return Ok(book_dir);
+        }
+
+        Err(Box::new(super::errors::NotExist(
+            "invalid path".to_string(),
+        )))
+
     }
 
     pub fn get_book(&mut self, book_id: &str) -> Result<Book> {
@@ -233,8 +258,7 @@ impl Voile {
             return Ok(book.clone());
         }
 
-        // TODO: dir safety check
-        let book_dir = self.get_book_dir(book_id);
+        let book_dir = self.get_book_dir(book_id)?;
 
         let default_created_time = std::fs::metadata(&book_dir)?
             .created()?
@@ -320,7 +344,7 @@ impl Voile {
             return Ok(());
         }
 
-        std::fs::remove_dir_all(self.get_book_dir(book_id))?;
+        std::fs::remove_dir_all(self.get_book_dir(book_id)?)?;
 
         self.book_cache.remove(book_id);
 
@@ -346,7 +370,7 @@ impl Voile {
 
     fn create_valid_book_id(&self, base_book_id: &str) -> Result<String> {
         {
-            let folderpath = self.get_book_dir(base_book_id);
+            let folderpath = self.get_book_dir(base_book_id)?;
             if std::fs::create_dir(&folderpath).is_ok() {
                 return Ok(base_book_id.to_string());
             }
@@ -354,7 +378,7 @@ impl Voile {
 
         for i in 0..self.book_id_retry_number {
             let try_book_id: String = format!("{}_{}", base_book_id, i);
-            let folderpath = self.get_book_dir(&try_book_id);
+            let folderpath = self.get_book_dir(&try_book_id)?;
             if std::fs::create_dir(&folderpath).is_ok() {
                 return Ok(try_book_id.to_string());
             }
@@ -371,7 +395,7 @@ impl Voile {
         super::util::encode_to_utf8(filesource, &tmp_filename)?;
 
         let valid_book_id = self.create_valid_book_id(book_id)?;
-        let folderpath = self.get_book_dir(&valid_book_id);
+        let folderpath = self.get_book_dir(&valid_book_id)?;
 
         let filepath = folderpath.join(filename);
 
@@ -381,7 +405,7 @@ impl Voile {
 
     async fn add_book_pdf(&self, filesource: PathBuf, filename: &str, book_id: &str) -> Result<()> {
         let valid_book_id = self.create_valid_book_id(book_id)?;
-        let folderpath = self.get_book_dir(&valid_book_id);
+        let folderpath = self.get_book_dir(&valid_book_id)?;
 
         let filepath = folderpath.join(filename);
 
@@ -391,7 +415,7 @@ impl Voile {
 
     async fn add_book_zip(&self, filesource: PathBuf, book_id: &str) -> Result<()> {
         let valid_book_id = self.create_valid_book_id(book_id)?;
-        let folderpath = self.get_book_dir(&valid_book_id);
+        let folderpath = self.get_book_dir(&valid_book_id)?;
 
         // TODO: exception safe
 
@@ -416,18 +440,16 @@ impl Voile {
     }
 
     pub fn get_book_content_path(&mut self, book_id: &str, content_idx: usize) -> Result<PathBuf> {
-        // TODO: dir safety check
         let book = self.get_book(book_id)?;
         let content_id = match book.content_titles.get(content_idx) {
             Some(s) => s,
             None => return Err(Box::new(super::errors::IndexOutOfRange(content_idx))),
         };
 
-        Ok(self.get_book_dir(&book_id).join(content_id))
+        Ok(self.get_book_dir(&book_id)?.join(content_id))
     }
 
     pub fn get_book_cover_path(&mut self, book_id: &str) -> Result<PathBuf> {
-        // TODO: dir safety check
         let book = self.get_book(book_id)?;
 
         let book_cover = if let Some(book_cover) = book.book_cover {
@@ -436,11 +458,11 @@ impl Voile {
             return Err(Box::new(super::errors::NotExist("book_cover".to_string())));
         };
 
-        Ok(self.get_book_dir(&book_id).join(book_cover))
+        Ok(self.get_book_dir(&book_id)?.join(book_cover))
     }
 
     pub async fn set_book_cover(&mut self, book_id: &str, filesource: PathBuf) -> Result<()> {
-        let filepath = self.get_book_dir(book_id).join(BOOK_COVER_FILENAME);
+        let filepath = self.get_book_dir(book_id)?.join(BOOK_COVER_FILENAME);
 
         crate::voile::util::move_file(filesource, filepath)?;
         self.book_cache.remove(book_id);
@@ -455,7 +477,7 @@ impl Voile {
         let cur_book = self.book_cache.get_mut(&book_id_string).unwrap();
         cur_book.apply_book_detail(&book_detail);
 
-        let detail_filename = self.get_book_dir(book_id).join(DETAIL_FILENAME);
+        let detail_filename = self.get_book_dir(book_id)?.join(DETAIL_FILENAME);
 
         book_detail.write_to_filename(detail_filename)?;
         Ok(())
