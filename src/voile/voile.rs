@@ -1,6 +1,9 @@
 use path_absolutize::Absolutize;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -46,6 +49,27 @@ impl BookDetails {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BookHash(pub HashMap<String, String>);
+
+impl BookHash {
+    pub fn new() -> BookHash {
+        BookHash(HashMap::new())
+    }
+
+    pub fn from_filename<P: AsRef<Path>>(filename: P) -> std::io::Result<BookHash> {
+        let detail_str = std::fs::read_to_string(filename)?;
+        let detail: BookHash = serde_json::from_str(&detail_str)?;
+        Ok(detail)
+    }
+
+    pub fn write_to_filename<P: AsRef<Path>>(&self, filename: P) -> std::io::Result<()> {
+        let detail_str = serde_json::to_string_pretty(&self)?;
+        std::fs::write(filename, detail_str)?;
+        Ok(())
+    }
+}
+
 #[derive(Serialize, Clone, Debug)]
 pub struct Book {
     pub book_id: String,
@@ -56,6 +80,9 @@ pub struct Book {
     pub content_titles: Vec<String>,
     pub book_cover: Option<String>,
     pub book_type: Option<String>,
+
+    // Calculated info
+    pub content_sha256: BookHash,
 
     // Fixed info
     pub created_timestamp: u64,
@@ -103,6 +130,7 @@ impl BookProc {
 }
 
 const DETAIL_FILENAME: &str = "details.json";
+const HASH_FILENAME: &str = "hash.json";
 const BOOK_COVER_FILENAME: &str = "book_cover.jpg";
 
 pub struct Voile {
@@ -243,7 +271,7 @@ impl Voile {
                 return Err(Box::new(super::errors::NotExist(
                     "invalid encoding".to_string(),
                 )));
-            },
+            }
         };
 
         if abs_dir_str.starts_with(&self.books_dir) {
@@ -253,7 +281,6 @@ impl Voile {
         Err(Box::new(super::errors::NotExist(
             "invalid path".to_string(),
         )))
-
     }
 
     pub fn get_book(&mut self, book_id: &str) -> Result<Book> {
@@ -311,6 +338,8 @@ impl Voile {
             book_cover: None,
             book_type: None,
 
+            content_sha256: BookHash::new(),
+
             created_timestamp: default_created_time,
             modified_timestamp: default_modified_time,
             local_path: local_path.to_str().unwrap().to_string(),
@@ -321,6 +350,25 @@ impl Voile {
 
         if let Ok(book_detail) = BookDetails::from_filename(detail_filename) {
             book.apply_book_detail(&book_detail);
+        }
+
+        // hash.json is optional
+        let hash_filename = book_dir.join(HASH_FILENAME);
+
+        if let Ok(book_hash) = BookHash::from_filename(hash_filename) {
+            book.content_sha256 = book_hash
+        }
+
+        for content in &book.content_titles {
+            if book.content_sha256.0.get(content).is_some() {
+                continue;
+            }
+
+            let content_path = book_dir.join(content);
+            book.content_sha256.0.insert(
+                content.to_string(),
+                sha256::try_digest(content_path.as_path())?,
+            );
         }
 
         if book.book_cover.is_none() {
