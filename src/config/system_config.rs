@@ -1,6 +1,8 @@
+use std::path::PathBuf;
+
 use serde::{Deserialize, Serialize};
 
-pub fn default_system_config(voile_config_dir: std::path::PathBuf) -> std::io::Result<String> {
+pub fn default_system_config(voile_config_dir: PathBuf) -> std::io::Result<String> {
     let default_toml = include_str!("../../configs/system.default.toml");
     let mut doc: toml_edit::Document = default_toml.parse().unwrap();
 

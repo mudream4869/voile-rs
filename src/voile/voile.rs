@@ -127,11 +127,14 @@ fn is_image(file_path: &str) -> bool {
 }
 
 impl Voile {
-    pub fn new(books_dir: String) -> Result<Self> {
+    pub fn new(voile_config_dir: std::path::PathBuf) -> Result<Self> {
+        let sys_conf =
+            crate::config::system_config::SystemConfig::from_dir(voile_config_dir.clone())?;
+
         let db_conn = sqlite::open(":memory:")?;
 
         let mut ret = Self {
-            books_dir: books_dir,
+            books_dir: sys_conf.data_dir,
             book_cache: std::collections::HashMap::new(),
             db_conn: std::sync::Mutex::new(db_conn),
             book_id_retry_number: 100,

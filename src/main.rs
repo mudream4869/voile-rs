@@ -39,15 +39,14 @@ fn main() -> std::io::Result<()> {
 
 #[actix_web::main]
 async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
-    let conf = config::system_config::SystemConfig::from_dir(voile_config_dir.clone())?;
+    let sys_conf = config::system_config::SystemConfig::from_dir(voile_config_dir.clone())?;
 
     // TODO: remove unwrap
     let app_state: crate::appstate::appstate::SharedAppState = Arc::new(Mutex::new(
-        crate::appstate::appstate::AppState::new(voile_config_dir.clone(), conf.data_dir.clone())
-            .unwrap(),
+        crate::appstate::appstate::AppState::new(voile_config_dir.clone()).unwrap(),
     ));
 
-    let serve_url = format!("http://{}:{}", &conf.ip, conf.port);
+    let serve_url = format!("http://{}:{}", &sys_conf.ip, sys_conf.port);
 
     log::info!("Listen on: {}", serve_url);
 
@@ -58,16 +57,16 @@ async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
             .configure(|s| routes::book::configure(s))
             .configure(|s| routes::config::configure(s));
 
-        if conf.frontend_dir.is_empty() {
+        if sys_conf.frontend_dir.is_empty() {
             app.configure(routes::default_frontend::configure)
         } else {
-            app.configure(|s| routes::userdefine_frontend::configure(s, &conf.frontend_dir))
+            app.configure(|s| routes::userdefine_frontend::configure(s, &sys_conf.frontend_dir))
         }
     })
-    .bind((conf.ip, conf.port))?
+    .bind((sys_conf.ip, sys_conf.port))?
     .run();
 
-    if conf.open_browser {
+    if sys_conf.open_browser {
         if let Err(err) = open::that(&serve_url) {
             eprintln!("An error occurred when opening '{}': {}", serve_url, err);
         }

@@ -9,10 +9,10 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(voile_config_dir: std::path::PathBuf, data_dir: String) -> Result<AppState> {
+    pub fn new(voile_config_dir: std::path::PathBuf) -> Result<AppState> {
         Ok(AppState {
-            voile: crate::voile::voile::Voile::new(data_dir)?,
-            config_handler: crate::voile::config::ConfigHandler::new(voile_config_dir)?,
+            voile: crate::voile::voile::Voile::new(voile_config_dir.clone())?,
+            config_handler: crate::voile::config::ConfigHandler::new(voile_config_dir.clone())?,
         })
     }
 }
