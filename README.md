@@ -1,6 +1,11 @@
-# Voile
+<div align="center">
+<em><img src="bookshelf.png" height="90px"></em>
+<h1>Voile<br/><sub>A personal book reading app.</sub></h1>
+</div>
 
 Voile is a app designed for personal book reading that supports various file formats. It allows users to store their preferred book format, be it a folder of images or texts, for easy reading.
+
+<a href="https://www.flaticon.com/free-icons/bookshelf" title="bookshelf icons">Bookshelf icons created by Freepik - Flaticon</a>
 
 ## Target
 
