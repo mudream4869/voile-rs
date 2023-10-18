@@ -98,19 +98,22 @@ export default {
       ]
     },
     reader_name() {
-      if (this.is_mixture_reader) {
-        return 'mixture_reader'
-      }
       if (this.is_pdf_reader) {
         return 'pdf_reader'
+      }
+      if (this.is_epub_reader) {
+        return 'epub_reader'
       }
       return 'mixture_reader'
     },
     is_mixture_reader() {
-      return !this.is_pdf_reader;
+      return !this.is_pdf_reader && !this.is_epub_reader;
     },
     is_pdf_reader() {
       return this.book.content_titles.length == 1 && this.book.content_titles[0].endsWith('.pdf')
+    },
+    is_epub_reader() {
+      return this.book.content_titles.length == 1 && this.book.content_titles[0].endsWith('.epub')
     }
   },
   methods: {

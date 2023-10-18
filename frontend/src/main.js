@@ -17,6 +17,7 @@ import BooksManage from './components/BooksManage.vue'
 
 import MixtureReader from './views/MixtureReader.vue'
 import PDFReader from './views/PDFReader.vue'
+import EpubReader from './views/EpubReader.vue'
 
 // Composables
 import { createApp } from 'vue'
@@ -39,6 +40,11 @@ const routes = [
     name: 'pdf_reader',
     path: '/pdf_reader/:book_id/contents/:content_idx/:paging',
     component: PDFReader,
+  },
+  {
+    name: 'epub_reader',
+    path: '/epub_reader/:book_id/contents/:content_idx/:paging',
+    component: EpubReader,
   },
   {
     path: "/*",

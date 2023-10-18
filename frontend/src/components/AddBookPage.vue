@@ -1,8 +1,8 @@
 <template>
   <v-app>
     <v-form class="ma-md-2">
-      <v-file-input accept="text/*, application/zip, application/pdf" multiple label="txt檔案/zip檔案/pdf檔案"
-        :key="fileInputKey" @change="addBook($event)"></v-file-input>
+      <v-file-input accept="text/*, application/zip, application/epub+zip, application/pdf" multiple
+        label="txt檔案/zip檔案/pdf檔案/epub檔案" :key="fileInputKey" @change="addBook($event)"></v-file-input>
     </v-form>
     <v-btn @click="uploadBooks()" :disabled="uploadable == 0"> 上傳 </v-btn>
     <div class="ma-md-2">
@@ -13,7 +13,7 @@
         </v-list-item>
       </v-list>
 
-      <h2> 可上傳檔案格式: txt/zip/pdf </h2>
+      <h2> 可上傳檔案格式: txt/zip/pdf/epub </h2>
     </div>
   </v-app>
 </template>

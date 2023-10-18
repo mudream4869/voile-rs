@@ -243,7 +243,7 @@ impl Voile {
                 return Err(Box::new(super::errors::NotExist(
                     "invalid encoding".to_string(),
                 )));
-            },
+            }
         };
 
         if abs_dir_str.starts_with(&self.books_dir) {
@@ -253,7 +253,6 @@ impl Voile {
         Err(Box::new(super::errors::NotExist(
             "invalid path".to_string(),
         )))
-
     }
 
     pub fn get_book(&mut self, book_id: &str) -> Result<Book> {
@@ -364,10 +363,13 @@ impl Voile {
         } else if let Some(book_id) = filename.strip_suffix(".zip") {
             self.add_book_zip(filesource, book_id).await?;
             return Ok(());
+        } else if let Some(book_id) = filename.strip_suffix(".epub") {
+            self.add_book_epub(filesource, filename, book_id).await?;
+            return Ok(());
         }
 
         Err(Box::new(super::errors::FileTypeError(
-            "Not match txt, pdf or zip".to_string(),
+            "Not match txt, pdf, epub or zip".to_string(),
         )))
     }
 
@@ -407,6 +409,21 @@ impl Voile {
     }
 
     async fn add_book_pdf(&self, filesource: PathBuf, filename: &str, book_id: &str) -> Result<()> {
+        let valid_book_id = self.create_valid_book_id(book_id)?;
+        let folderpath = self.get_book_dir(&valid_book_id)?;
+
+        let filepath = folderpath.join(filename);
+
+        crate::voile::util::move_file(filesource, filepath)?;
+        Ok(())
+    }
+
+    async fn add_book_epub(
+        &self,
+        filesource: PathBuf,
+        filename: &str,
+        book_id: &str,
+    ) -> Result<()> {
         let valid_book_id = self.create_valid_book_id(book_id)?;
         let folderpath = self.get_book_dir(&valid_book_id)?;
 
