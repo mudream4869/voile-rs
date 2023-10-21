@@ -44,21 +44,16 @@ export default {
   },
   created() {
     const route = useRoute()
-    this.content_idx = parseInt(route.params.content_idx)
-    this.paging = parseInt(route.params.paging)
     this.book_id = route.params.book_id
+    this.content_idx = parseInt(route.params.content_idx)
+    if (route.params.progress != '0') {
+      this.paging = parseInt(route.params.progress)
+    }
 
     // fetch on init
     this.fetchBook()
 
     setBookProgress(this.book_id, this.content_idx, this.paging.toString())
-  },
-  updated() {
-    const new_content_idx = parseInt(this.$route.params.content_idx);
-    if (new_content_idx != this.content_idx) {
-      this.content_idx = new_content_idx
-      this.UpdateContentIDX()
-    }
   },
   methods: {
     async fetchBook() {
@@ -73,21 +68,9 @@ export default {
         params: {
           book_id: this.book_id,
           content_idx: this.content_idx,
-          paging: this.paging,
+          progress: this.paging,
         }
       })
-      setBookProgress(this.book_id, this.content_idx, this.paging.toString())
-    },
-    async UpdateContentIDX() {
-      this.$router.push({
-        name: 'pdf_reader',
-        params: {
-          book_id: this.book_id,
-          content_idx: this.content_idx,
-          paging: this.paging,
-        }
-      })
-
       setBookProgress(this.book_id, this.content_idx, this.paging.toString())
     },
     previous_content() {

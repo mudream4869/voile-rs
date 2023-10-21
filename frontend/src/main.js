@@ -33,17 +33,17 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 const routes = [
   {
     name: 'mixture_reader',
-    path: '/mixture_reader/:book_id/contents/:content_idx/:paging',
+    path: '/mixture_reader/:book_id/contents/:content_idx/:progress',
     component: MixtureReader,
   },
   {
     name: 'pdf_reader',
-    path: '/pdf_reader/:book_id/contents/:content_idx/:paging',
+    path: '/pdf_reader/:book_id/contents/:content_idx/:progress',
     component: PDFReader,
   },
   {
     name: 'epub_reader',
-    path: '/epub_reader/:book_id/contents/:content_idx/:paging',
+    path: '/epub_reader/:book_id/contents/:content_idx/:progress',
     component: EpubReader,
   },
   {

@@ -20,12 +20,12 @@
           <p v-if="book.author"> 作者: {{ book.author }} </p>
 
           <v-btn variant="outlined" v-if="book_progress.content_idx >= 0" target="_blank"
-            :to="{ name: reader_name, params: { book_id, content_idx: book_progress.content_idx, paging: parseInt(book_progress.progress) } }">
+            :to="{ name: reader_name, params: { book_id, content_idx: book_progress.content_idx, progress: book_progress.progress || '' } }">
             繼續閱讀: {{ book.content_titles[book_progress.content_idx] }}
           </v-btn>
 
           <v-btn variant="outlined" v-if="book_progress.content_idx == -1" target="_blank"
-            :to="{ name: reader_name, params: { book_id, content_idx: 0, paging: 0 } }">
+            :to="{ name: reader_name, params: { book_id: book_id, content_idx: 0, progress: '0' } }">
             開始閱讀
           </v-btn>
 
@@ -39,7 +39,7 @@
       <v-row v-if="is_mixture_reader">
         <v-col cols="4" v-for="(c, idx) in book.content_titles" :key="idx">
           <v-btn variant="text" target="_blank"
-            :to="{ name: 'mixture_reader', params: { book_id, content_idx: idx, paging: 0 } }">
+            :to="{ name: 'mixture_reader', params: { book_id, content_idx: idx, progress: '0' } }">
             {{ c }}
           </v-btn>
         </v-col>
@@ -66,7 +66,7 @@ export default {
       book_id: '',
       book_progress: {
         content_idx: -1,
-        progress: 0,
+        progress: '0',
       },
     }
   },

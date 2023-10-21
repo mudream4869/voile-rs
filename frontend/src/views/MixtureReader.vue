@@ -121,9 +121,12 @@ export default {
   },
   created() {
     const route = useRoute()
-    this.content_idx = parseInt(route.params.content_idx)
-    this.paging = parseInt(route.params.paging)
+
     this.book_id = route.params.book_id
+    this.content_idx = parseInt(route.params.content_idx)
+    if (route.params.progress != '0') {
+      this.paging = parseInt(route.params.progress)
+    }
 
     // fetch on init
     this.fetchBook()
@@ -155,7 +158,7 @@ export default {
         params: {
           book_id: this.book_id,
           content_idx: this.content_idx,
-          paging: this.paging,
+          progress: this.paging,
         }
       })
       setBookProgress(this.book_id, this.content_idx, this.paging.toString())

@@ -1,6 +1,7 @@
 <template>
   <v-app style='height: 100vh'>
-    <vue-reader :url="content_src_url" :epubInitOptions='{ openAs: "epub" }' />
+    <vue-reader :location='progress' @update:location='updateProgress' :url="content_src_url"
+      :epubInitOptions='{ openAs: "epub" }' />
   </v-app>
 </template>
 
@@ -22,6 +23,8 @@ export default {
 
       content_idx: 0,
       book_id: '',
+
+      progress: '',
     }
   },
   computed: {
@@ -33,32 +36,30 @@ export default {
     const route = useRoute()
     this.content_idx = parseInt(route.params.content_idx)
     this.book_id = route.params.book_id
+    if (route.params.progress != '0') {
+      this.progress = decodeURIComponent(route.params.progress)
+    }
 
     // fetch on init
     this.fetchBook()
-  },
-  updated() {
-    const new_content_idx = parseInt(this.$route.params.content_idx);
-    if (new_content_idx != this.content_idx) {
-      this.content_idx = new_content_idx
-      this.UpdateContentIDX()
-    }
+
+    setBookProgress(this.book_id, this.content_idx, this.progress)
   },
   methods: {
     async fetchBook() {
       this.book = await getBook(this.book_id)
     },
-    async UpdateContentIDX() {
+    updateProgress(epubcfi) {
       this.$router.push({
-        name: 'pdf_reader',
+        name: 'epub_reader',
         params: {
           book_id: this.book_id,
           content_idx: this.content_idx,
-          paging: 0,
+          progress: encodeURIComponent(epubcfi),
         }
       })
-
-      setBookProgress(this.book_id, this.content_idx, this.paging.toString())
+      this.progress = epubcfi
+      setBookProgress(this.book_id, this.content_idx, this.progress)
     },
   },
 }
