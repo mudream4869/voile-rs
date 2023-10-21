@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import { getBook, setBookProc, getContentURL } from '@/api/books'
+import { getBook, setBookProgress, getContentURL } from '@/api/books'
 import VueReader from 'vue-reader'
 
 import { useRoute } from 'vue-router'
@@ -58,7 +58,7 @@ export default {
         }
       })
 
-      setBookProc(this.book_id, this.content_idx, this.paging)
+      setBookProgress(this.book_id, this.content_idx, this.paging.toString())
     },
   },
 }

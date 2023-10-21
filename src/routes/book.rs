@@ -166,23 +166,27 @@ async fn get_book_content(
     Ok(actix_files::NamedFile::open(content_path)?)
 }
 
-#[get("/api/user/book_proc/{book_id}")]
-async fn get_book_proc(
+#[get("/api/user/book_progress/{book_id}")]
+async fn get_book_progress(
     path: web::Path<String>,
     app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<impl Responder> {
     let book_id = path.into_inner();
 
-    let book_proc = app_state.lock().unwrap().voile.get_book_proc(&book_id)?;
+    let book_progress = app_state
+        .lock()
+        .unwrap()
+        .voile
+        .get_book_progress(&book_id)?;
 
-    Ok(web::Json(book_proc))
+    Ok(web::Json(book_progress))
 }
 
-#[post("/api/user/book_proc/{book_id}")]
-async fn set_book_proc(
+#[post("/api/user/book_progress/{book_id}")]
+async fn set_book_progress(
     path: web::Path<String>,
     app_state: web::Data<SharedAppState>,
-    book_proc: web::Json<crate::voile::voile::BookProc>,
+    book_progress: web::Json<crate::voile::voile::BookProgress>,
 ) -> actix_web::Result<impl Responder> {
     let book_id = path.into_inner();
 
@@ -190,9 +194,9 @@ async fn set_book_proc(
         .lock()
         .unwrap()
         .voile
-        .set_book_proc(&book_id, &book_proc.0)?;
+        .set_book_progress(&book_id, &book_progress.0)?;
 
-    Ok(book_proc)
+    Ok(book_progress)
 }
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
@@ -206,6 +210,6 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .service(set_book_cover)
         .service(set_book_detail)
         .service(get_book_content)
-        .service(get_book_proc)
-        .service(set_book_proc);
+        .service(get_book_progress)
+        .service(set_book_progress);
 }

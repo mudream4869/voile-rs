@@ -88,16 +88,16 @@ impl Book {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct BookProc {
+pub struct BookProgress {
     pub content_idx: usize,
-    pub paging: usize,
+    pub progress: String,
 }
 
-impl BookProc {
-    pub fn new() -> BookProc {
-        BookProc {
+impl BookProgress {
+    pub fn new() -> BookProgress {
+        BookProgress {
             content_idx: 0,
-            paging: 0,
+            progress: String::new(),
         }
     }
 }
@@ -147,28 +147,28 @@ impl Voile {
     pub fn init(&mut self) -> Result<()> {
         let db_conn = self.db_conn.lock().unwrap();
         db_conn.execute(
-            "CREATE TABLE IF NOT EXISTS book_read_proc (
+            "CREATE TABLE IF NOT EXISTS book_read_progress (
                  book_id TEXT NOT NULL UNIQUE,
                  content_idx INTEGER NOT NULL,
-                 paging INTEGER NOT NULL
+                 progress STRING NOT NULL
              )",
         )?;
 
         Ok(())
     }
 
-    pub fn get_book_proc(&self, book_id: &str) -> Result<BookProc> {
+    pub fn get_book_progress(&self, book_id: &str) -> Result<BookProgress> {
         let db_conn = self.db_conn.lock().unwrap();
-        let query = "SELECT content_idx, paging FROM book_read_proc WHERE book_id = :book_id";
+        let query = "SELECT content_idx, progress FROM book_read_progress WHERE book_id = :book_id";
         let mut statement = db_conn.prepare(query)?;
         statement.bind::<&[(_, sqlite::Value)]>(&[(":book_id", book_id.into())][..])?;
 
         let s = statement.next()?;
 
         if s == sqlite::State::Row {
-            return Ok(BookProc {
+            return Ok(BookProgress {
                 content_idx: statement.read::<i64, _>("content_idx").unwrap() as usize,
-                paging: statement.read::<i64, _>("paging").unwrap() as usize,
+                progress: statement.read::<String, _>("progress").unwrap(),
             });
         }
 
@@ -177,20 +177,20 @@ impl Voile {
         )))
     }
 
-    pub fn set_book_proc(&self, book_id: &str, book_proc: &BookProc) -> Result<()> {
+    pub fn set_book_progress(&self, book_id: &str, book_progress: &BookProgress) -> Result<()> {
         let db_conn = self.db_conn.lock().unwrap();
         let query = r#"
-            INSERT INTO book_read_proc (book_id, content_idx, paging)
-                VALUES (:book_id, :content_idx, :paging)
+            INSERT INTO book_read_progress (book_id, content_idx, progress)
+                VALUES (:book_id, :content_idx, :progress)
                 ON CONFLICT (book_id) DO
-                UPDATE SET content_idx = excluded.content_idx, paging = excluded.paging;
+                UPDATE SET content_idx = excluded.content_idx, progress = excluded.progress;
         "#;
         let mut statement = db_conn.prepare(query)?;
 
         statement.bind::<&[(_, sqlite::Value)]>(&[
             (":book_id", book_id.into()),
-            (":content_idx", (book_proc.content_idx as i64).into()),
-            (":paging", (book_proc.paging as i64).into()),
+            (":content_idx", (book_progress.content_idx as i64).into()),
+            (":progress", book_progress.progress.as_str().into()),
         ])?;
 
         statement.next()?;

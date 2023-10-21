@@ -19,12 +19,12 @@
 
           <p v-if="book.author"> 作者: {{ book.author }} </p>
 
-          <v-btn variant="outlined" v-if="book_proc.content_idx >= 0" target="_blank"
-            :to="{ name: reader_name, params: { book_id, content_idx: book_proc.content_idx, paging: book_proc.paging } }">
-            繼續閱讀: {{ book.content_titles[book_proc.content_idx] }}
+          <v-btn variant="outlined" v-if="book_progress.content_idx >= 0" target="_blank"
+            :to="{ name: reader_name, params: { book_id, content_idx: book_progress.content_idx, paging: parseInt(book_progress.progress) } }">
+            繼續閱讀: {{ book.content_titles[book_progress.content_idx] }}
           </v-btn>
 
-          <v-btn variant="outlined" v-if="book_proc.content_idx == -1" target="_blank"
+          <v-btn variant="outlined" v-if="book_progress.content_idx == -1" target="_blank"
             :to="{ name: reader_name, params: { book_id, content_idx: 0, paging: 0 } }">
             開始閱讀
           </v-btn>
@@ -50,7 +50,7 @@
 
 <script>
 import { useRoute } from 'vue-router'
-import { getBook, getBookProc, getBookCoverURL } from '@/api/books'
+import { getBook, getBookProgress, getBookCoverURL } from '@/api/books'
 
 export default {
   data: () => {
@@ -64,9 +64,9 @@ export default {
       },
 
       book_id: '',
-      book_proc: {
+      book_progress: {
         content_idx: -1,
-        paging: 0,
+        progress: 0,
       },
     }
   },
@@ -120,9 +120,9 @@ export default {
     async fetchData() {
       this.book = await getBook(this.book_id)
 
-      let book_proc = await getBookProc(this.book_id)
-      if (book_proc) {
-        this.book_proc = book_proc
+      let book_progress = await getBookProgress(this.book_id)
+      if (book_progress) {
+        this.book_progress = book_progress
       }
 
       document.title += ' | ' + this.book.title

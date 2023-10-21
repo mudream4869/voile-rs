@@ -53,7 +53,7 @@
 </template>
 
 <script>
-import { getBook, setBookProc, getContentURL } from '@/api/books'
+import { getBook, setBookProgress, getContentURL } from '@/api/books'
 
 import { useRoute } from 'vue-router'
 
@@ -128,7 +128,7 @@ export default {
     // fetch on init
     this.fetchBook()
 
-    setBookProc(this.book_id, this.content_idx, this.paging)
+    setBookProgress(this.book_id, this.content_idx, this.paging.toString())
   },
   updated() {
     const new_content_idx = parseInt(this.$route.params.content_idx);
@@ -158,7 +158,7 @@ export default {
           paging: this.paging,
         }
       })
-      setBookProc(this.book_id, this.content_idx, this.paging)
+      setBookProgress(this.book_id, this.content_idx, this.paging.toString())
     },
     async UpdateContentIDX() {
       if (this.is_text) {
@@ -176,7 +176,7 @@ export default {
         }
       })
 
-      setBookProc(this.book_id, this.content_idx, this.paging)
+      setBookProgress(this.book_id, this.content_idx, this.paging.toString())
     },
     previous_content() {
       if (this.paging > 0) {

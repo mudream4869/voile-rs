@@ -37,8 +37,8 @@ export async function deleteBook(book_id) {
     })
 }
 
-export async function setBookProc(book_id, content_idx, paging) {
-    await fetch(`api/user/book_proc/${book_id}`, {
+export async function setBookProgress(book_id, content_idx, progress) {
+    await fetch(`api/user/book_progress/${book_id}`, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
@@ -46,13 +46,13 @@ export async function setBookProc(book_id, content_idx, paging) {
         },
         body: JSON.stringify({
             content_idx: content_idx,
-            paging: paging,
+            progress: progress,
         }),
     })
 }
 
-export async function getBookProc(book_id) {
-    let res = await fetch(`api/user/book_proc/${book_id}`)
+export async function getBookProgress(book_id) {
+    let res = await fetch(`api/user/book_progress/${book_id}`)
     if (res.status == 200) {
         return await res.json()
     }
