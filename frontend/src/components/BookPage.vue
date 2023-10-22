@@ -20,10 +20,11 @@
           <p v-if="book.author"> 作者: {{ book.author }} </p>
 
           <v-btn variant="outlined" v-if="book_progress.content_idx >= 0" target="_blank"
-            :to="{ name: reader_name, params: { book_id, content_idx: book_progress.content_idx, progress: book_progress.progress || '' } }">
+            :to="{ name: reader_name, params: { book_id, content_idx: book_progress.content_idx, progress: book_progress.progress || '0' } }">
             繼續閱讀: {{ book.content_titles[book_progress.content_idx] }}
           </v-btn>
 
+          <!-- param should not be an empty string, hence we pass '0' instead of '' -->
           <v-btn variant="outlined" v-if="book_progress.content_idx == -1" target="_blank"
             :to="{ name: reader_name, params: { book_id: book_id, content_idx: 0, progress: '0' } }">
             開始閱讀

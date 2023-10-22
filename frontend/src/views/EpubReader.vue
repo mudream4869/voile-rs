@@ -24,7 +24,7 @@ export default {
       content_idx: 0,
       book_id: '',
 
-      progress: '',
+      progress: null,
     }
   },
   computed: {
