@@ -353,7 +353,7 @@ impl Voile {
         Ok(())
     }
 
-    pub async fn add_book(&self, filename: &str, filesource: PathBuf) -> Result<()> {
+    pub async fn add_book(&mut self, filename: &str, filesource: PathBuf) -> Result<()> {
         if let Some(book_id) = filename.strip_suffix(".txt") {
             self.add_book_txt(filesource, filename, book_id).await?;
             return Ok(());
@@ -408,13 +408,26 @@ impl Voile {
         Ok(())
     }
 
-    async fn add_book_pdf(&self, filesource: PathBuf, filename: &str, book_id: &str) -> Result<()> {
+    async fn add_book_pdf(
+        &mut self,
+        filesource: PathBuf,
+        filename: &str,
+        book_id: &str,
+    ) -> Result<()> {
         let valid_book_id = self.create_valid_book_id(book_id)?;
         let folderpath = self.get_book_dir(&valid_book_id)?;
 
         let filepath = folderpath.join(filename);
 
-        crate::voile::util::move_file(filesource, filepath)?;
+        crate::voile::util::move_file(filesource, &filepath)?;
+
+        if let Ok(pdf_meta) = crate::voile::util::get_pdf_metadata(filepath.as_path()) {
+            let mut book_detail = BookDetails::new();
+            book_detail.author = pdf_meta.author;
+            book_detail.title = pdf_meta.title;
+            let _ = self.set_book_detail(book_id, book_detail);
+        }
+
         Ok(())
     }
 
