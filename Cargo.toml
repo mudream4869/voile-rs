@@ -28,6 +28,7 @@ open = "4"
 chardet = "0.2.4"
 encoding = "0.2.33"
 pdf = "0.8.1"
+epub = "2.1.1"
 
 [[bin]]
 name = "app"

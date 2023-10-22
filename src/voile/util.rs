@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use epub::doc::EpubDoc;
 use pdf::file::FileOptions;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -43,18 +44,43 @@ pub fn get_pdf_metadata<P: AsRef<Path>>(path: P) -> Result<PDFMeta> {
     };
 
     if let Some(info) = &file.trailer.info_dict {
-        dbg!(info);
         if let Some(author) = info.get("Author") {
             if let Ok(author) = author.to_string() {
                 meta.author = Some(author);
             }
         }
-        // Title may be nonsense
-        /*if let Some(title) = info.get("Title") {
+        if let Some(title) = info.get("Title") {
             if let Ok(title) = title.to_string() {
                 meta.title = Some(title);
             }
-        }*/
+        }
+    }
+
+    Ok(meta)
+}
+
+pub struct EPubMeta {
+    pub title: Option<String>,
+    pub author: Option<String>,
+    pub cover: Option<Vec<u8>>,
+}
+
+pub fn get_epub_metadata<P: AsRef<Path>>(path: P) -> Result<EPubMeta> {
+    let mut doc = EpubDoc::new(path)?;
+    let title = doc.mdata("title");
+
+    // TODO: support multiple authors
+    let author = doc.mdata("creator");
+
+    let mut meta = EPubMeta {
+        title: title,
+        author: author,
+        cover: None,
+    };
+
+    if let Some((cover, _mime)) = doc.get_cover() {
+        dbg!(_mime);
+        meta.cover = Some(cover);
     }
 
     Ok(meta)

@@ -1,5 +1,6 @@
 use path_absolutize::Absolutize;
 use serde::{Deserialize, Serialize};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -424,7 +425,8 @@ impl Voile {
         if let Ok(pdf_meta) = crate::voile::util::get_pdf_metadata(filepath.as_path()) {
             let mut book_detail = BookDetails::new();
             book_detail.author = pdf_meta.author;
-            book_detail.title = pdf_meta.title;
+            // Title may be nonsense
+            // book_detail.title = pdf_meta.title;
             let _ = self.set_book_detail(book_id, book_detail);
         }
 
@@ -432,7 +434,7 @@ impl Voile {
     }
 
     async fn add_book_epub(
-        &self,
+        &mut self,
         filesource: PathBuf,
         filename: &str,
         book_id: &str,
@@ -442,7 +444,22 @@ impl Voile {
 
         let filepath = folderpath.join(filename);
 
-        crate::voile::util::move_file(filesource, filepath)?;
+        crate::voile::util::move_file(filesource, &filepath)?;
+
+        if let Ok(epub_meta) = crate::voile::util::get_epub_metadata(filepath.as_path()) {
+            let mut book_detail = BookDetails::new();
+            book_detail.title = epub_meta.title;
+            book_detail.author = epub_meta.author;
+            let _ = self.set_book_detail(book_id, book_detail);
+
+            if let Some(cover) = epub_meta.cover {
+                let tmp_dir = tempfile::tempdir()?;
+                let tmp_filename = tmp_dir.path().join("tmp.png");
+                let mut f = std::fs::File::create(&tmp_filename)?;
+                f.write_all(&cover)?;
+                self.set_book_cover(book_id, tmp_filename).await?;
+            }
+        }
         Ok(())
     }
 
