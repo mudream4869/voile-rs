@@ -66,7 +66,7 @@ async fn set_user_avatar(
     if let Some(field) = payload.try_next().await? {
         let tmp_dir = tempfile::tempdir()?;
         let tmp_filename = tmp_dir.path().join("tmp");
-        crate::routes::util::download_file_from_multipart(field, &tmp_filename).await?;
+        super::util::download_file_from_multipart(field, &tmp_filename).await?;
 
         app_state
             .lock()

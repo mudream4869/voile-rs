@@ -81,7 +81,7 @@ async fn add_book(
 
         let tmp_dir = tempfile::tempdir()?;
         let tmp_filename = tmp_dir.path().join(&filename);
-        crate::routes::util::download_file_from_multipart(field, &tmp_filename).await?;
+        super::util::download_file_from_multipart(field, &tmp_filename).await?;
 
         let res = app_state
             .lock()
@@ -128,7 +128,7 @@ async fn set_book_cover(
     if let Some(field) = payload.try_next().await? {
         let tmp_dir = tempfile::tempdir()?;
         let tmp_filename = tmp_dir.path().join("tmp");
-        crate::routes::util::download_file_from_multipart(field, &tmp_filename).await?;
+        super::util::download_file_from_multipart(field, &tmp_filename).await?;
 
         app_state
             .lock()

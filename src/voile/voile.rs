@@ -425,7 +425,7 @@ impl Voile {
 
         let filepath = folderpath.join(filename);
 
-        crate::voile::util::move_file(tmp_filename, filepath)?;
+        super::util::move_file(tmp_filename, filepath)?;
         Ok(())
     }
 
@@ -440,9 +440,9 @@ impl Voile {
 
         let filepath = folderpath.join(filename);
 
-        crate::voile::util::move_file(filesource, &filepath)?;
+        super::util::move_file(filesource, &filepath)?;
 
-        if let Ok(pdf_meta) = crate::voile::util::get_pdf_metadata(filepath.as_path()) {
+        if let Ok(pdf_meta) = super::util::get_pdf_metadata(filepath.as_path()) {
             let mut book_detail = BookDetails::new();
             book_detail.author = pdf_meta.author;
             // Title may be nonsense
@@ -464,9 +464,9 @@ impl Voile {
 
         let filepath = folderpath.join(filename);
 
-        crate::voile::util::move_file(filesource, &filepath)?;
+        super::util::move_file(filesource, &filepath)?;
 
-        if let Ok(epub_meta) = crate::voile::util::get_epub_metadata(filepath.as_path()) {
+        if let Ok(epub_meta) = super::util::get_epub_metadata(filepath.as_path()) {
             let mut book_detail = BookDetails::new();
             book_detail.title = epub_meta.title;
             book_detail.author = epub_meta.author;
@@ -535,7 +535,7 @@ impl Voile {
     pub async fn set_book_cover(&mut self, book_id: &str, filesource: PathBuf) -> Result<()> {
         let filepath = self.get_book_dir(book_id)?.join(BOOK_COVER_FILENAME);
 
-        crate::voile::util::move_file(filesource, filepath)?;
+        super::util::move_file(filesource, filepath)?;
         self.book_cache.remove(book_id);
 
         Ok(())
