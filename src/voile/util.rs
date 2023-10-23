@@ -62,6 +62,7 @@ pub fn get_pdf_metadata<P: AsRef<Path>>(path: P) -> Result<PDFMeta> {
 pub struct EPubMeta {
     pub title: Option<String>,
     pub author: Option<String>,
+    pub description: Option<String>,
     pub cover: Option<Vec<u8>>,
 }
 
@@ -69,12 +70,15 @@ pub fn get_epub_metadata<P: AsRef<Path>>(path: P) -> Result<EPubMeta> {
     let mut doc = EpubDoc::new(path)?;
     let title = doc.mdata("title");
 
+    let description = doc.mdata("description");
+
     // TODO: support multiple authors
     let author = doc.mdata("creator");
 
     let mut meta = EPubMeta {
         title: title,
         author: author,
+        description: description,
         cover: None,
     };
 

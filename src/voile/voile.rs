@@ -470,6 +470,7 @@ impl Voile {
             let mut book_detail = BookDetails::new();
             book_detail.title = epub_meta.title;
             book_detail.author = epub_meta.author;
+            book_detail.description = epub_meta.description;
             let _ = self.set_book_detail(book_id, book_detail);
 
             if let Some(cover) = epub_meta.cover {
