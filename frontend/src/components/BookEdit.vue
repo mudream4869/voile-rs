@@ -40,11 +40,12 @@
           <v-col cols="9">
             <v-text-field label="標題" required v-model="book.title"></v-text-field>
             <v-text-field label="作者" v-model="book.author"></v-text-field>
-            <v-autocomplete label="分類" v-model="book.book_type" :items="books_types"></v-autocomplete>
+            <v-combobox label="分類" v-model="book.book_type" :items="books_types"></v-combobox>
             <v-chip-group>
               <v-chip v-for="(tag, i) in book.tags" :key="tag" @click="book.tags.splice(i, 1)"> {{ tag }} </v-chip>
-              <v-autocomplete density="compact" variant="solo" append-inner-icon="mdi-plus" label="想要新增的標籤" single-line
-                hide-details v-model="input_tag" :items="books_tags" @click:append-inner="addTag"></v-autocomplete>
+              <v-combobox density="compact" variant="solo" append-inner-icon="mdi-plus" label="想要新增的標籤" single-line
+                hide-details v-model="input_tag" :items="books_tags" @click:append-inner="addTag"
+                @keyup.enter="addTag"></v-combobox>
             </v-chip-group>
             <v-divider class="ma-md-4"></v-divider>
             <v-btn class="ma-md-2" color="primary" @click="updateBookDetail();">確認修改</v-btn>
