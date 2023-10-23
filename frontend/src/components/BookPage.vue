@@ -19,6 +19,10 @@
 
           <p v-if="book.author"> 作者: {{ book.author }} </p>
 
+          <p v-if="book.language"> 語言：{{ book.language }} </p>
+
+          <p v-if="book.description"> {{ book.description }} </p>
+
           <v-btn variant="outlined" v-if="book_progress.content_idx >= 0" target="_blank"
             :to="{ name: reader_name, params: { book_id, content_idx: book_progress.content_idx, progress: book_progress.progress || '0' } }">
             繼續閱讀: {{ book.content_titles[book_progress.content_idx] }}
@@ -58,6 +62,8 @@ export default {
     return {
       book: {
         title: '',
+        language: null,
+        description: null,
         content_titles: [],
         tags: null,
         author: null,

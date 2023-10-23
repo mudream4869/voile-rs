@@ -51,6 +51,8 @@
               <v-col cols="9"> {{ detail.book.book_type || "<NULL>" }} </v-col>
               <v-col cols="3"> 作者 </v-col>
               <v-col cols="9"> {{ detail.book.author }} </v-col>
+              <v-col cols="3"> 語言 </v-col>
+              <v-col cols="9"> {{ detail.book.language }} </v-col>
               <v-col cols="3"> 標籤 </v-col>
               <v-col cols="9"> {{ detail.book.tags }} </v-col>
               <v-col cols="3"> 新增日期 </v-col>

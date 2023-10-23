@@ -40,7 +40,9 @@
           <v-col cols="9">
             <v-text-field label="標題" required v-model="book.title"></v-text-field>
             <v-text-field label="作者" v-model="book.author"></v-text-field>
+            <v-combobox label="語言" v-model="book.language" :items="books_langs"></v-combobox>
             <v-combobox label="分類" v-model="book.book_type" :items="books_types"></v-combobox>
+            <v-textarea label="簡介" v-model="book.description"></v-textarea>
             <v-chip-group>
               <v-chip v-for="(tag, i) in book.tags" :key="tag" @click="book.tags.splice(i, 1)"> {{ tag }} </v-chip>
               <v-combobox density="compact" variant="solo" append-inner-icon="mdi-plus" label="想要新增的標籤" single-line
@@ -59,14 +61,15 @@
 
 <script>
 import { useRoute } from 'vue-router'
-import { updateBookDetail, getBook, getAllTags, getAllTypes, getBookCoverURL, uploadBookCover } from '@/api/books'
+import { updateBookDetail, getBook, getAllTags, getAllTypes, getAllLangs, getBookCoverURL, uploadBookCover } from '@/api/books'
 
 export default {
   data: () => {
     return {
       book: {
         title: '',
-        content_titles: [],
+        language: null,
+        description: null,
         tags: null,
         author: null,
         book_type: null,
@@ -74,6 +77,7 @@ export default {
 
       books_tags: [],
       books_types: [],
+      books_langs: [],
 
       book_id: '',
 
@@ -129,12 +133,15 @@ export default {
       this.book = await getBook(this.book_id)
       this.books_tags = await getAllTags()
       this.books_types = await getAllTypes()
+      this.books_langs = await getAllLangs()
 
       document.title += ' | 編輯 ' + this.book.title
     },
     async updateBookDetail() {
       await updateBookDetail(this.book_id, {
         title: this.book.title,
+        language: this.book.language,
+        description: this.book.description,
         author: this.book.author,
         tags: this.book.tags,
         book_type: this.book.book_type,

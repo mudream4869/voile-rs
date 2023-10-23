@@ -31,6 +31,14 @@ async fn get_books_types(
     Ok(web::Json(types))
 }
 
+#[get("/api/books_langs")]
+async fn get_books_langs(
+    app_state: web::Data<SharedAppState>,
+) -> actix_web::Result<impl Responder> {
+    let langs = app_state.lock().unwrap().voile.get_all_book_langs()?;
+    Ok(web::Json(langs))
+}
+
 #[get("/api/books/{book_id}")]
 async fn get_book(
     path: web::Path<String>,
@@ -203,6 +211,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(get_books)
         .service(get_books_tags)
         .service(get_books_types)
+        .service(get_books_langs)
         .service(get_book)
         .service(add_book)
         .service(delete_book)

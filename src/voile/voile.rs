@@ -11,6 +11,12 @@ pub struct BookDetails {
     pub title: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub author: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -27,6 +33,8 @@ impl BookDetails {
     pub fn new() -> BookDetails {
         BookDetails {
             title: None,
+            language: None,
+            description: None,
             author: None,
             tags: None,
             book_cover: None,
@@ -53,7 +61,9 @@ pub struct Book {
     pub title: String,
 
     pub author: Option<String>,
+    pub language: Option<String>,
     pub tags: Option<Vec<String>>,
+    pub description: Option<String>,
     pub content_titles: Vec<String>,
     pub book_cover: Option<String>,
     pub book_type: Option<String>,
@@ -68,6 +78,14 @@ impl Book {
     pub fn apply_book_detail(&mut self, book_detail: &BookDetails) {
         if let Some(title) = book_detail.title.clone() {
             self.title = title;
+        }
+
+        if let Some(language) = book_detail.language.clone() {
+            self.language = Some(language);
+        }
+
+        if let Some(description) = book_detail.description.clone() {
+            self.description = Some(description);
         }
 
         if let Some(author) = book_detail.author.clone() {
@@ -305,9 +323,11 @@ impl Voile {
         let mut book = Book {
             book_id: book_id.to_string(),
             title: book_id.to_string(),
+            language: None,
             content_titles,
             author: None,
             tags: None,
+            description: None,
             book_cover: None,
             book_type: None,
 
@@ -550,6 +570,18 @@ impl Voile {
         for book in self.get_books()? {
             if let Some(tags) = book.tags {
                 ret.extend(tags);
+            }
+        }
+        ret.sort();
+        ret.dedup();
+        Ok(ret)
+    }
+
+    pub fn get_all_book_langs(&mut self) -> Result<Vec<String>> {
+        let mut ret = vec![];
+        for book in self.get_books()? {
+            if let Some(lang) = book.language {
+                ret.push(lang)
             }
         }
         ret.sort();

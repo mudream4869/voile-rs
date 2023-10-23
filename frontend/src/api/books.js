@@ -17,6 +17,10 @@ export async function getAllTypes() {
     return await (await fetch(`api/books_types`)).json()
 }
 
+export async function getAllLangs() {
+    return await (await fetch(`api/books_langs`)).json()
+}
+
 export async function getAllBooks() {
     return (await (await fetch('api/books')).json()).books.map(book => {
         book.tags_set = new Set(book.tags || [])
