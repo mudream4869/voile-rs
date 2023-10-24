@@ -7,6 +7,8 @@
 // Components
 import App from './App.vue'
 import Layout from './views/Layout.vue'
+
+import LoginPage from './views/LoginPage.vue'
 import BooksPage from './components/BooksPage.vue'
 import BookPage from './components/BookPage.vue'
 import AddBookPage from './components/AddBookPage.vue'
@@ -45,6 +47,13 @@ const routes = [
     name: 'epub_reader',
     path: '/epub_reader/:book_id/contents/:content_idx/:progress',
     component: EpubReader,
+  },
+  {
+    path: '/login',
+    component: LoginPage,
+    meta: {
+      title: '登入',
+    },
   },
   {
     path: "/*",
