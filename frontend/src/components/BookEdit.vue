@@ -42,6 +42,7 @@
             <v-text-field label="作者" v-model="book.author"></v-text-field>
             <v-combobox label="語言" v-model="book.language" :items="books_langs"></v-combobox>
             <v-combobox label="分類" v-model="book.book_type" :items="books_types"></v-combobox>
+            <v-checkbox label="NSFW" v-model="book.nsfw"></v-checkbox>
             <v-textarea label="簡介" v-model="book.description"></v-textarea>
             <v-chip-group>
               <v-chip v-for="(tag, i) in book.tags" :key="tag" @click="book.tags.splice(i, 1)"> {{ tag }} </v-chip>
@@ -73,6 +74,7 @@ export default {
         tags: null,
         author: null,
         book_type: null,
+        nsfw: null,
       },
 
       books_tags: [],
@@ -145,6 +147,7 @@ export default {
         author: this.book.author,
         tags: this.book.tags,
         book_type: this.book.book_type,
+        nsfw: this.book.nsfw,
       })
       this.$router.push({
         name: 'book', params: {

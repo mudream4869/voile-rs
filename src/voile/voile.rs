@@ -27,6 +27,9 @@ pub struct BookDetails {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub book_type: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nsfw: Option<bool>,
 }
 
 impl BookDetails {
@@ -39,6 +42,7 @@ impl BookDetails {
             tags: None,
             book_cover: None,
             book_type: None,
+            nsfw: None,
         }
     }
 
@@ -59,6 +63,7 @@ impl BookDetails {
 pub struct Book {
     pub book_id: String,
     pub title: String,
+    pub nsfw: bool,
 
     pub author: Option<String>,
     pub language: Option<String>,
@@ -102,6 +107,10 @@ impl Book {
 
         if let Some(book_type) = book_detail.book_type.clone() {
             self.book_type = Some(book_type)
+        }
+
+        if let Some(nsfw) = book_detail.nsfw.clone() {
+            self.nsfw = nsfw
         }
     }
 }
@@ -323,6 +332,7 @@ impl Voile {
         let mut book = Book {
             book_id: book_id.to_string(),
             title: book_id.to_string(),
+            nsfw: false,
             language: None,
             content_titles,
             author: None,

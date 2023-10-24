@@ -11,6 +11,7 @@
         <v-col cols="9">
           <h1>
             {{ book.title }}
+            <v-chip v-if="book.nsfw" class="ma-2" label> NSFW </v-chip>
           </h1>
 
           <div v-if="book.tags">
@@ -68,6 +69,7 @@ export default {
         tags: null,
         author: null,
         book_type: null,
+        nsfw: null,
       },
 
       book_id: '',
