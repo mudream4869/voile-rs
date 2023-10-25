@@ -42,6 +42,13 @@
           </v-form>
         </v-expansion-panel-text>
       </v-expansion-panel>
+      <v-expansion-panel title="其他操作">
+        <v-expansion-panel-text>
+          <v-form class="ma-md-2">
+            <v-btn @click="logout">登出</v-btn>
+          </v-form>
+        </v-expansion-panel-text>
+      </v-expansion-panel>
     </v-expansion-panels>
   </v-app>
 </template>
@@ -49,6 +56,7 @@
 <script>
 import { uploadAvatar, updateUserConfig, getUserConfig, getSystemConfig } from '@/api/config';
 import { useTheme } from 'vuetify'
+import Cookies from 'js-cookie'
 
 export default {
   data: () => {
@@ -79,6 +87,11 @@ export default {
     uploadAvatar(event) {
       const avatar_file = event.target.files[0];
       uploadAvatar(avatar_file);
+    },
+
+    logout() {
+      Cookies.remove('login_token')
+      this.$router.push({ name: 'login' })
     },
 
     async updateUserName() {
