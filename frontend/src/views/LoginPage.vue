@@ -25,6 +25,8 @@
 </template>
 
 <script>
+import Cookies from 'js-cookie'
+
 export default {
   data: () => {
     return {
@@ -35,6 +37,10 @@ export default {
   created() {
   },
   methods: {
+    login: function () {
+      Cookies.set('login_token', '1', { expires: 1 })
+      this.$router.push({ name: 'home' })
+    },
   },
 }
 </script>

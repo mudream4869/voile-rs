@@ -21,6 +21,8 @@ import MixtureReader from './views/MixtureReader.vue'
 import PDFReader from './views/PDFReader.vue'
 import EpubReader from './views/EpubReader.vue'
 
+import Cookies from 'js-cookie'
+
 // Composables
 import { createApp } from 'vue'
 
@@ -49,10 +51,12 @@ const routes = [
     component: EpubReader,
   },
   {
+    name: 'login',
     path: '/login',
     component: LoginPage,
     meta: {
       title: '登入',
+      no_auth: true,
     },
   },
   {
@@ -61,6 +65,7 @@ const routes = [
     children: [
       {
         path: '/',
+        name: 'home',
         component: HomePage,
         meta: {
           title: '首頁',
@@ -118,6 +123,25 @@ const router = createRouter({
     return { top: 0 }
   },
   routes,
+})
+
+router.beforeEach(async (to, from, next) => {
+  const token = Cookies.get('login_token')
+
+  if (to.meta.no_auth) {
+    if (token) {
+      next({ name: 'home' })
+    } else {
+      next()
+    }
+    return
+  }
+
+  if (token) {
+    next()
+  } else {
+    next({ name: 'login' })
+  }
 })
 
 router.afterEach((to, from) => {
