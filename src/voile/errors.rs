@@ -41,3 +41,14 @@ impl std::fmt::Display for FileTypeError {
 }
 
 impl std::error::Error for FileTypeError {}
+
+#[derive(Debug)]
+pub struct AuthError(pub String);
+
+impl std::fmt::Display for AuthError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "auth failure: {}", self.0)
+    }
+}
+
+impl std::error::Error for AuthError {}

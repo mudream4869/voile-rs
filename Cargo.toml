@@ -17,7 +17,7 @@ toml = "0.5"
 home = "0.5"
 actix-multipart = "0.5.0"
 futures-util = "0.3.26"
-rust-embed="6.6.1"
+rust-embed = "6.6.1"
 mime_guess = { version = "2" }
 zip = "0.6"
 tempfile = "3"
@@ -29,6 +29,8 @@ chardet = "0.2.4"
 encoding = "0.2.33"
 pdf = "0.8.1"
 epub = "2.1.1"
+sha2 = "0.9.9"
+hex = "0.4.3"
 
 [[bin]]
 name = "app"

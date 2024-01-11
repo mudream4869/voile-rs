@@ -1,3 +1,4 @@
+use sha2::{digest::Digest, Sha512};
 use std::path::PathBuf;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -43,6 +44,26 @@ impl ConfigHandler {
 
     pub fn set_user_theme(&self, theme: &str) -> Result<()> {
         self.edit_user_config("theme", theme)
+    }
+
+    pub fn auth(&self, username: &str, password: &str) -> Result<bool> {
+        let user_config = self.get_user_config()?;
+
+        if user_config.username != username {
+            return Ok(false);
+        }
+
+        let mut hasher = Sha512::new();
+        hasher.update(password.as_bytes());
+        hasher.update(user_config.password_salt.as_bytes());
+
+        let hex_res = String::from_utf8(hex::decode(hasher.finalize().as_slice())?)?;
+
+        if user_config.password_sha512 != hex_res {
+            return Ok(false);
+        }
+
+        Ok(true)
     }
 
     pub fn get_user_avatar_path(&self) -> PathBuf {
