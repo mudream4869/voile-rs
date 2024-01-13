@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+actix-session = { version = "0.9.0", features = ["cookie-session"] }
 actix-web = "4"
 actix-files = "0.6"
 serde = { version = "1.0", features = ["derive"] }
@@ -31,7 +32,11 @@ pdf = "0.8.1"
 epub = "2.1.1"
 sha2 = "0.9.9"
 hex = "0.4.3"
-
+uuid = { version = "1.6.1", features = [
+    "v4",                # Lets you generate random UUIDs
+    "fast-rng",          # Use a faster (but still sufficiently random) RNG
+    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+] }
 [[bin]]
 name = "app"
 path = "src/main.rs"

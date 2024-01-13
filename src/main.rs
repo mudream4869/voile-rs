@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 pub mod appstate;
 pub mod config;
 pub mod routes;
+pub mod user;
 pub mod voile;
 
 fn main() -> std::io::Result<()> {
@@ -51,17 +52,30 @@ async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
     log::info!("Listen on: {}", serve_url);
 
     let server = actix_web::HttpServer::new(move || {
-        let app = actix_web::App::new()
+        let mut app = actix_web::App::new()
             .app_data(actix_web::web::Data::new(app_state.clone()))
-            .wrap(actix_web::middleware::Logger::default())
-            .configure(|s| routes::book::configure(s))
-            .configure(|s| routes::config::configure(s));
+            .configure(routes::book::configure)
+            .configure(routes::config::configure)
+            .wrap(routes::user::Authentication)
+            .wrap(
+                // TODO: setting key from config
+                actix_session::SessionMiddleware::builder(
+                    actix_session::storage::CookieSessionStore::default(),
+                    actix_web::cookie::Key::from(&[0; 64]),
+                )
+                .cookie_secure(false)
+                .build(),
+            )
+            .configure(routes::user::configure);
 
         if sys_conf.frontend_dir.is_empty() {
-            app.configure(routes::default_frontend::configure)
+            app = app.configure(routes::default_frontend::configure);
         } else {
-            app.configure(|s| routes::userdefine_frontend::configure(s, &sys_conf.frontend_dir))
+            app = app
+                .configure(|s| routes::userdefine_frontend::configure(s, &sys_conf.frontend_dir));
         }
+
+        app.wrap(actix_web::middleware::Logger::default())
     })
     .bind((sys_conf.ip, sys_conf.port))?
     .run();

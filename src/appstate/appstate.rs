@@ -6,6 +6,7 @@ pub type SharedAppState = Arc<Mutex<AppState>>;
 pub struct AppState {
     pub voile: crate::voile::voile::Voile,
     pub config_handler: crate::voile::config::ConfigHandler,
+    pub user_cookies: crate::user::user::UserCookies,
 }
 
 impl AppState {
@@ -13,6 +14,7 @@ impl AppState {
         Ok(AppState {
             voile: crate::voile::voile::Voile::new(voile_config_dir.clone())?,
             config_handler: crate::voile::config::ConfigHandler::new(voile_config_dir.clone())?,
+            user_cookies: crate::user::user::UserCookies::new(),
         })
     }
 }
