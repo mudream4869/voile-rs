@@ -26,13 +26,7 @@ async fn login_user(
         return Ok(actix_web::HttpResponse::Unauthorized().finish());
     }
 
-    let uid = app_state
-        .lock()
-        .unwrap()
-        .user_cookies
-        .create(&login_params.username);
-
-    session.insert("login_token", uid)?;
+    session.insert("auth_username", &login_params.username)?;
 
     Ok(actix_web::HttpResponse::Ok().finish())
 }
@@ -50,7 +44,7 @@ use actix_web::FromRequest;
 use actix_web::{
     body::EitherBody,
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    Error, HttpMessage, HttpResponse,
+    Error, HttpResponse,
 };
 
 use futures_util::{future::LocalBoxFuture, FutureExt};
@@ -99,26 +93,9 @@ where
         let ses = actix_session::Session::extract(&req).into_inner().unwrap();
         let req = ServiceRequest::from_parts(req, pl);
 
-        let app_state = req
-            .app_data::<actix_web::web::Data<crate::appstate::appstate::SharedAppState>>()
-            .unwrap();
-
-        let mut auth_ok = true;
-
-        if let Ok(Some(id)) = ses.get::<String>("login_token") {
-            if let Some(username) = app_state.lock().unwrap().user_cookies.get_username(&id) {
-                // TODO: read from config
-                if username != "admin" {
-                    auth_ok = false;
-                }
-            } else {
-                auth_ok = false;
-            }
+        if let Ok(Some(_)) = ses.get::<String>("auth_username") {
+            // OK
         } else {
-            auth_ok = false;
-        }
-
-        if !auth_ok {
             let http_res = HttpResponse::Unauthorized().finish();
             let (http_req, _) = req.into_parts();
             let res = ServiceResponse::new(http_req, http_res);
@@ -130,18 +107,10 @@ where
         let service = Rc::clone(&self.service);
 
         Box::pin(async move {
-            // Getting some data here (just demo code for async function)
-            let user = get_some_data().await;
-            req.extensions_mut().insert(user);
-
             // Continue with the next middleware / handler
             let res = service.call(req).await?;
             // Map to L type
             Ok(res.map_into_left_body())
         })
     }
-}
-
-async fn get_some_data() -> String {
-    "Data".into()
 }

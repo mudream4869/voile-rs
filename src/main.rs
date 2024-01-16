@@ -5,7 +5,6 @@ use std::sync::{Arc, Mutex};
 pub mod appstate;
 pub mod config;
 pub mod routes;
-pub mod user;
 pub mod voile;
 
 fn main() -> std::io::Result<()> {
