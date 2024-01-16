@@ -11,8 +11,8 @@
               <v-card-text>
                 <form ref="form" @submit.prevent="login()">
                   <v-text-field v-model="username" label="Username" type="text" required></v-text-field>
-
                   <v-text-field v-model="password" label="Password" type="password" required></v-text-field>
+                  <v-alert v-model="login_fail" closable text="Login fail!"></v-alert>
                   <v-btn type="submit" class="mt-4" color="primary" value="log in">Login</v-btn>
                 </form>
               </v-card-text>
@@ -33,6 +33,7 @@ export default {
     return {
       username: '',
       password: '',
+      login_fail: false,
     }
   },
   created() {
@@ -44,6 +45,8 @@ export default {
         if (resp.status == 200) {
           Cookies.set('has_login', '1', { expires: 1 })
           this.$router.push({ name: 'home' })
+        } else {
+          this.login_fail = true;
         }
       })
     },
