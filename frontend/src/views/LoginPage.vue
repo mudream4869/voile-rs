@@ -25,6 +25,7 @@
 </template>
 
 <script>
+import { login } from '@/api/users'
 import Cookies from 'js-cookie'
 
 export default {
@@ -38,8 +39,13 @@ export default {
   },
   methods: {
     login: function () {
-      Cookies.set('login_token', '1', { expires: 1 })
-      this.$router.push({ name: 'home' })
+      login(this.username, this.password).then(resp => {
+        console.log(resp)
+        if (resp.status == 200) {
+          Cookies.set('has_login', '1', { expires: 1 })
+          this.$router.push({ name: 'home' })
+        }
+      })
     },
   },
 }

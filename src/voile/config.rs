@@ -57,7 +57,7 @@ impl ConfigHandler {
         hasher.update(password.as_bytes());
         hasher.update(user_config.password_salt.as_bytes());
 
-        let hex_res = String::from_utf8(hex::decode(hasher.finalize().as_slice())?)?;
+        let hex_res = hex::encode(hasher.finalize().as_slice());
 
         if user_config.password_sha512 != hex_res {
             return Ok(false);

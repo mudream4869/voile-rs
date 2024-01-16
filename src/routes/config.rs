@@ -3,7 +3,7 @@ use futures_util::TryStreamExt;
 
 use actix_web::{get, post, web, Responder};
 
-#[get("/api/config/system")]
+#[get("/config/system")]
 async fn get_system_config(
     app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<impl Responder> {
@@ -12,7 +12,7 @@ async fn get_system_config(
     ))
 }
 
-#[get("/api/config/user")]
+#[get("/config/user")]
 async fn get_user_config(
     app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<impl Responder> {
@@ -21,7 +21,7 @@ async fn get_user_config(
     ))
 }
 
-#[post("/api/config/user")]
+#[post("/config/user")]
 async fn set_user_config(
     app_state: web::Data<SharedAppState>,
     user_config: web::Json<crate::config::user_config::UserConfig>,
@@ -45,7 +45,7 @@ async fn set_user_config(
     Ok(actix_web::HttpResponse::Ok().finish())
 }
 
-#[get("/api/config/user/avatar")]
+#[get("/config/user/avatar")]
 async fn get_user_avatar(
     app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<impl Responder> {
@@ -58,7 +58,7 @@ async fn get_user_avatar(
     )?)
 }
 
-#[post("/api/config/user/avatar")]
+#[post("/config/user/avatar")]
 async fn set_user_avatar(
     mut payload: actix_multipart::Multipart,
     app_state: web::Data<SharedAppState>,

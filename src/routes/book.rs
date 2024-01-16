@@ -11,19 +11,19 @@ struct RespBooks {
     books: Vec<crate::voile::voile::Book>,
 }
 
-#[get("/api/books")]
+#[get("/books")]
 async fn get_books(app_state: web::Data<SharedAppState>) -> actix_web::Result<impl Responder> {
     let books = app_state.lock().unwrap().voile.get_books()?;
     Ok(web::Json(RespBooks { books }))
 }
 
-#[get("/api/books_tags")]
+#[get("/books_tags")]
 async fn get_books_tags(app_state: web::Data<SharedAppState>) -> actix_web::Result<impl Responder> {
     let tags = app_state.lock().unwrap().voile.get_all_book_tags()?;
     Ok(web::Json(tags))
 }
 
-#[get("/api/books_types")]
+#[get("/books_types")]
 async fn get_books_types(
     app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<impl Responder> {
@@ -31,7 +31,7 @@ async fn get_books_types(
     Ok(web::Json(types))
 }
 
-#[get("/api/books_langs")]
+#[get("/books_langs")]
 async fn get_books_langs(
     app_state: web::Data<SharedAppState>,
 ) -> actix_web::Result<impl Responder> {
@@ -39,7 +39,7 @@ async fn get_books_langs(
     Ok(web::Json(langs))
 }
 
-#[get("/api/books/{book_id}")]
+#[get("/books/{book_id}")]
 async fn get_book(
     path: web::Path<String>,
     app_state: web::Data<SharedAppState>,
@@ -51,7 +51,7 @@ async fn get_book(
     Ok(web::Json(book))
 }
 
-#[delete("/api/books/{book_id}")]
+#[delete("/books/{book_id}")]
 async fn delete_book(
     path: web::Path<String>,
     app_state: web::Data<SharedAppState>,
@@ -63,7 +63,7 @@ async fn delete_book(
     Ok(actix_web::HttpResponse::Ok().finish())
 }
 
-#[post("/api/books")]
+#[post("/books")]
 async fn add_book(
     mut payload: actix_multipart::Multipart,
     app_state: web::Data<SharedAppState>,
@@ -102,7 +102,7 @@ async fn add_book(
     )));
 }
 
-#[get("/api/books/{book_id}/book_cover")]
+#[get("/books/{book_id}/book_cover")]
 async fn get_book_cover(
     path: web::Path<String>,
     app_state: web::Data<SharedAppState>,
@@ -118,7 +118,7 @@ async fn get_book_cover(
     Ok(actix_files::NamedFile::open(book_cover_path)?)
 }
 
-#[post("/api/books/{book_id}/book_cover")]
+#[post("/books/{book_id}/book_cover")]
 async fn set_book_cover(
     path: web::Path<String>,
     mut payload: actix_multipart::Multipart,
@@ -141,7 +141,7 @@ async fn set_book_cover(
     Ok(actix_web::HttpResponse::Ok().finish())
 }
 
-#[post("/api/books/{book_id}")]
+#[post("/books/{book_id}")]
 async fn set_book_detail(
     path: web::Path<String>,
     app_state: web::Data<SharedAppState>,
@@ -158,7 +158,7 @@ async fn set_book_detail(
     Ok(actix_web::HttpResponse::Ok().finish())
 }
 
-#[get("/api/books/{book_id}/contents/{content_id}")]
+#[get("/books/{book_id}/contents/{content_id}")]
 async fn get_book_content(
     path: web::Path<(String, usize)>,
     app_state: web::Data<SharedAppState>,
@@ -174,7 +174,7 @@ async fn get_book_content(
     Ok(actix_files::NamedFile::open(content_path)?)
 }
 
-#[get("/api/user/book_progress/{book_id}")]
+#[get("/user/book_progress/{book_id}")]
 async fn get_book_progress(
     path: web::Path<String>,
     app_state: web::Data<SharedAppState>,
@@ -190,7 +190,7 @@ async fn get_book_progress(
     Ok(web::Json(book_progress))
 }
 
-#[post("/api/user/book_progress/{book_id}")]
+#[post("/user/book_progress/{book_id}")]
 async fn set_book_progress(
     path: web::Path<String>,
     app_state: web::Data<SharedAppState>,

@@ -126,7 +126,7 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  const token = Cookies.get('login_token')
+  const token = Cookies.get('has_login')
 
   if (to.meta.no_auth) {
     if (token) {

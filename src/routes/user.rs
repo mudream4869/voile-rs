@@ -32,7 +32,7 @@ async fn login_user(
         .user_cookies
         .create(&login_params.username);
 
-    session.insert("login_token", &uid)?;
+    session.insert("login_token", uid)?;
 
     Ok(actix_web::HttpResponse::Ok().finish())
 }
@@ -100,7 +100,7 @@ where
         let req = ServiceRequest::from_parts(req, pl);
 
         let app_state = req
-            .app_data::<crate::appstate::appstate::SharedAppState>()
+            .app_data::<actix_web::web::Data<crate::appstate::appstate::SharedAppState>>()
             .unwrap();
 
         let mut auth_ok = true;

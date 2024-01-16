@@ -90,7 +90,7 @@ export default {
     },
 
     logout() {
-      Cookies.remove('login_token')
+      Cookies.remove('has_login')
       this.$router.push({ name: 'login' })
     },
 

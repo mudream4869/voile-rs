@@ -38,6 +38,14 @@ fn main() -> std::io::Result<()> {
     app(voile_config_dir)
 }
 
+fn configure_frontend(cfg: &mut actix_web::web::ServiceConfig, frontend_dir: &String) {
+    if frontend_dir.is_empty() {
+        routes::default_frontend::configure(cfg);
+    } else {
+        routes::userdefine_frontend::configure(cfg, frontend_dir);
+    }
+}
+
 #[actix_web::main]
 async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
     let sys_conf = config::system_config::SystemConfig::from_dir(voile_config_dir.clone())?;
@@ -52,11 +60,11 @@ async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
     log::info!("Listen on: {}", serve_url);
 
     let server = actix_web::HttpServer::new(move || {
-        let mut app = actix_web::App::new()
+        actix_web::App::new()
+            .wrap(actix_web::middleware::Logger::default())
             .app_data(actix_web::web::Data::new(app_state.clone()))
-            .configure(routes::book::configure)
-            .configure(routes::config::configure)
-            .wrap(routes::user::Authentication)
+            .configure(routes::user::configure)
+            .configure(|s| configure_frontend(s, &sys_conf.frontend_dir))
             .wrap(
                 // TODO: setting key from config
                 actix_session::SessionMiddleware::builder(
@@ -66,16 +74,12 @@ async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
                 .cookie_secure(false)
                 .build(),
             )
-            .configure(routes::user::configure);
-
-        if sys_conf.frontend_dir.is_empty() {
-            app = app.configure(routes::default_frontend::configure);
-        } else {
-            app = app
-                .configure(|s| routes::userdefine_frontend::configure(s, &sys_conf.frontend_dir));
-        }
-
-        app.wrap(actix_web::middleware::Logger::default())
+            .service(
+                actix_web::web::scope("/api")
+                    .wrap(routes::user::Authentication)
+                    .configure(routes::book::configure)
+                    .configure(routes::config::configure),
+            )
     })
     .bind((sys_conf.ip, sys_conf.port))?
     .run();
