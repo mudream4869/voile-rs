@@ -58,21 +58,26 @@ async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
 
     log::info!("Listen on: {}", serve_url);
 
+    let session_key = actix_web::cookie::Key::generate();
+
     let server = actix_web::HttpServer::new(move || {
         actix_web::App::new()
-            .wrap(actix_web::middleware::Logger::default())
             .app_data(actix_web::web::Data::new(app_state.clone()))
             .configure(routes::user::configure)
             .configure(|s| configure_frontend(s, &sys_conf.frontend_dir))
             .wrap(
-                // TODO: setting key from config
                 actix_session::SessionMiddleware::builder(
                     actix_session::storage::CookieSessionStore::default(),
-                    actix_web::cookie::Key::from(&[0; 64]),
+                    session_key.clone(),
                 )
                 .cookie_secure(false)
+                .session_lifecycle(
+                    actix_session::config::PersistentSession::default()
+                        .session_ttl(actix_web::cookie::time::Duration::days(1)),
+                )
                 .build(),
             )
+            .wrap(actix_web::middleware::Logger::default())
             .service(
                 actix_web::web::scope("/api")
                     .wrap(routes::user::Authentication)
