@@ -7,7 +7,7 @@ theme = "light"
 # Display name
 name = "Admin"
 
-# Login username
+# Auth username
 # default: "admin"
 username = "admin"
 

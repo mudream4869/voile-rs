@@ -5,9 +5,6 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 struct LoginParams {
     #[serde(default)]
-    pub username: String,
-
-    #[serde(default)]
     pub password: String,
 }
 
@@ -21,12 +18,19 @@ async fn login_user(
         .lock()
         .unwrap()
         .config_handler
-        .auth(&login_params.username, &login_params.password)?
+        .auth(&login_params.password)?
     {
         return Ok(actix_web::HttpResponse::Unauthorized().finish());
     }
 
-    session.insert("auth_username", &login_params.username)?;
+    let username = app_state
+        .lock()
+        .unwrap()
+        .config_handler
+        .get_user_config()?
+        .username;
+
+    session.insert("auth_username", &username)?;
 
     Ok(actix_web::HttpResponse::Ok().finish())
 }

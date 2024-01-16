@@ -23,6 +23,13 @@ impl ConfigHandler {
     }
 
     pub fn get_user_config(&self) -> std::io::Result<crate::config::user_config::UserConfig> {
+        let mut exposed_user_config = self._get_user_config()?.clone();
+        exposed_user_config.password_salt.clear();
+        exposed_user_config.password_sha512.clear();
+        Ok(exposed_user_config)
+    }
+
+    fn _get_user_config(&self) -> std::io::Result<crate::config::user_config::UserConfig> {
         crate::config::user_config::UserConfig::from_toml(&self.user_config_filename)
     }
 
@@ -46,12 +53,18 @@ impl ConfigHandler {
         self.edit_user_config("theme", theme)
     }
 
-    pub fn auth(&self, username: &str, password: &str) -> Result<bool> {
-        let user_config = self.get_user_config()?;
+    pub fn set_user_password(&self, password: &str) -> Result<()> {
+        let user_config = self._get_user_config()?;
+        let mut hasher = Sha512::new();
+        hasher.update(password.as_bytes());
+        hasher.update(user_config.password_salt.as_bytes());
+        let hex_res = hex::encode(hasher.finalize().as_slice());
 
-        if user_config.username != username {
-            return Ok(false);
-        }
+        self.edit_user_config("password_sha512", &hex_res)
+    }
+
+    pub fn auth(&self, password: &str) -> Result<bool> {
+        let user_config = self._get_user_config()?;
 
         let mut hasher = Sha512::new();
         hasher.update(password.as_bytes());

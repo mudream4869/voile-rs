@@ -1,6 +1,8 @@
 use crate::appstate::appstate::SharedAppState;
 use futures_util::TryStreamExt;
 
+use serde::Deserialize;
+
 use actix_web::{get, post, web, Responder};
 
 #[get("/config/system")]
@@ -45,6 +47,38 @@ async fn set_user_config(
     Ok(actix_web::HttpResponse::Ok().finish())
 }
 
+#[derive(Deserialize)]
+struct PasswordBody {
+    #[serde(default)]
+    pub old_password: String,
+
+    #[serde(default)]
+    pub new_password: String,
+}
+
+#[post("/config/user/password")]
+async fn set_user_password(
+    app_state: web::Data<SharedAppState>,
+    password_body: web::Json<PasswordBody>,
+) -> actix_web::Result<actix_web::HttpResponse> {
+    if !app_state
+        .lock()
+        .unwrap()
+        .config_handler
+        .auth(&password_body.old_password)?
+    {
+        return Ok(actix_web::HttpResponse::Unauthorized().finish());
+    }
+
+    app_state
+        .lock()
+        .unwrap()
+        .config_handler
+        .set_user_password(&password_body.new_password)?;
+
+    Ok(actix_web::HttpResponse::Ok().finish())
+}
+
 #[get("/config/user/avatar")]
 async fn get_user_avatar(
     app_state: web::Data<SharedAppState>,
@@ -84,5 +118,6 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .service(get_user_avatar)
         .service(set_user_avatar)
         .service(get_user_config)
-        .service(set_user_config);
+        .service(set_user_config)
+        .service(set_user_password);
 }

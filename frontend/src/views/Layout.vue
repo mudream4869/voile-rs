@@ -36,8 +36,9 @@
 
 <script>
 import { useTheme } from 'vuetify'
-import { getUserConfig } from '@/api/config'
+import { awaitUserConfig } from '@/api/config'
 import { getAllTypes } from '@/api/books'
+import Cookies from 'js-cookie'
 
 export default {
   data: () => ({
@@ -49,9 +50,16 @@ export default {
   }),
   methods: {
     async fetchUserConfig() {
-      this.user_config = await getUserConfig()
+      awaitUserConfig().then(async resp => {
+        if (resp.status == 200) {
+          this.user_config = await resp.json()
+          this.theme.global.name.value = this.user_config.theme
+        } else if (resp.status == 401) {
+          Cookies.remove('has_login')
+          this.$router.push({ name: 'login' })
+        }
+      })
       this.books_types = await getAllTypes()
-      this.theme.global.name.value = this.user_config.theme
     },
   },
   created() {

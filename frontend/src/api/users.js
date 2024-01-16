@@ -1,4 +1,4 @@
-export async function login(username, password) {
+export async function login(password) {
     return await fetch(`login/`, {
         method: 'POST',
         headers: {
@@ -6,7 +6,6 @@ export async function login(username, password) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            username: username,
             password: password,
         }),
         credentials: 'include',
