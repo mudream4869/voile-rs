@@ -41,7 +41,6 @@ export default {
   methods: {
     login: function () {
       login(this.username, this.password).then(resp => {
-        console.log(resp)
         if (resp.status == 200) {
           Cookies.set('has_login', '1', { expires: 1 })
           this.$router.push({ name: 'home' })
