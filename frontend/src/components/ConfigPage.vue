@@ -42,13 +42,32 @@
           </v-form>
         </v-expansion-panel-text>
       </v-expansion-panel>
+      <v-expansion-panel title="修改密碼">
+        <v-expansion-panel-text>
+          <v-form class="ma-md-2" @submit.prevent="updateUserPassword()">
+            <v-text-field type="password" required label="舊密碼" v-model="user_password.old_password"></v-text-field>
+            <v-text-field type="password" required label="新密碼" v-model="user_password.new_password"></v-text-field>
+            <v-text-field type="password" required label="請再輸入一次新密碼" v-model="user_password.new_password2"></v-text-field>
+            <v-alert type="info" v-model="user_password.show_alert" closable> {{ user_password.alert_msg }} </v-alert>
+            <v-btn type="submit"> 修改密碼 </v-btn>
+          </v-form>
+        </v-expansion-panel-text>
+      </v-expansion-panel>
+      <v-expansion-panel title="其他操作">
+        <v-expansion-panel-text>
+          <v-form class="ma-md-2">
+            <v-btn @click="logout">登出</v-btn>
+          </v-form>
+        </v-expansion-panel-text>
+      </v-expansion-panel>
     </v-expansion-panels>
   </v-app>
 </template>
 
 <script>
-import { uploadAvatar, updateUserConfig, getUserConfig, getSystemConfig } from '@/api/config';
+import { uploadAvatar, updateUserConfig, updateUserPassword, getUserConfig, getSystemConfig } from '@/api/config';
 import { useTheme } from 'vuetify'
+import Cookies from 'js-cookie'
 
 export default {
   data: () => {
@@ -67,6 +86,14 @@ export default {
         theme: 'light',
       },
 
+      user_password: {
+        old_password: '',
+        new_password: '',
+        new_password2: '',
+        show_alert: false,
+        alert_msg: '',
+      },
+
       system_config: {
         ip: '127.0.0.1',
         port: 8080,
@@ -81,6 +108,11 @@ export default {
       uploadAvatar(avatar_file);
     },
 
+    logout() {
+      Cookies.remove('has_login')
+      this.$router.push({ name: 'login' })
+    },
+
     async updateUserName() {
       await updateUserConfig({ name: this.user_config.name })
     },
@@ -88,6 +120,28 @@ export default {
     async updateUserTheme(value) {
       await updateUserConfig({ theme: value })
       this.theme.global.name.value = value
+    },
+
+    async updateUserPassword() {
+      if (this.user_password.new_password != this.user_password.new_password2) {
+        this.user_password.alert_msg = '新密碼不相同'
+        this.user_password.show_alert = true
+        return
+      }
+
+      await updateUserPassword(this.user_password.old_password, this.user_password.new_password).then(resp => {
+        if (resp.status == 200) {
+          this.user_password.alert_msg = '密碼修改成功'
+          this.user_password.show_alert = true
+
+          this.user_password.old_password = ''
+          this.user_password.new_password = ''
+          this.user_password.new_password2 = ''
+        } else {
+          this.user_password.alert_msg = '密碼修改失敗'
+          this.user_password.show_alert = true
+        }
+      })
     },
 
     async fetchConfig() {

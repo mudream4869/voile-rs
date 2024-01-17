@@ -7,12 +7,12 @@ theme = "light"
 # Display name
 name = "Admin"
 
-# Login username
+# Auth username
 # default: "admin"
 username = "admin"
 
 # Login password
-# password_sha512 = sha521(password + password_salt)
-# leave empty to skip login page
-password_salt = ""
-password_sha512 = ""
+# password_sha512 = sha512(password + password_salt)
+# default password: admin
+password_salt = "salt"
+password_sha512 = "3c4a79782143337be4492be072abcfe979dd703c00541a8c39a0f3df4bab2029c050cf46fddc47090b5b04ac537b3e78189e3de16e601e859f95c51ac9f6dafb"

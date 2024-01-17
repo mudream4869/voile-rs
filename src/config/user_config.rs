@@ -11,6 +11,15 @@ pub struct UserConfig {
 
     #[serde(default)]
     pub theme: String,
+
+    #[serde(default)]
+    pub username: String,
+    
+    #[serde(default)]
+    pub password_salt: String,
+
+    #[serde(default)]
+    pub password_sha512: String,
 }
 
 impl UserConfig {

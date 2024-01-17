@@ -7,6 +7,8 @@
 // Components
 import App from './App.vue'
 import Layout from './views/Layout.vue'
+
+import LoginPage from './views/LoginPage.vue'
 import BooksPage from './components/BooksPage.vue'
 import BookPage from './components/BookPage.vue'
 import AddBookPage from './components/AddBookPage.vue'
@@ -18,6 +20,8 @@ import BooksManage from './components/BooksManage.vue'
 import MixtureReader from './views/MixtureReader.vue'
 import PDFReader from './views/PDFReader.vue'
 import EpubReader from './views/EpubReader.vue'
+
+import Cookies from 'js-cookie'
 
 // Composables
 import { createApp } from 'vue'
@@ -47,11 +51,21 @@ const routes = [
     component: EpubReader,
   },
   {
+    name: 'login',
+    path: '/login',
+    component: LoginPage,
+    meta: {
+      title: '登入',
+      no_auth: true,
+    },
+  },
+  {
     path: "/*",
     component: Layout,
     children: [
       {
         path: '/',
+        name: 'home',
         component: HomePage,
         meta: {
           title: '首頁',
@@ -109,6 +123,25 @@ const router = createRouter({
     return { top: 0 }
   },
   routes,
+})
+
+router.beforeEach(async (to, from, next) => {
+  const token = Cookies.get('has_login')
+
+  if (to.meta.no_auth) {
+    if (token) {
+      next({ name: 'home' })
+    } else {
+      next()
+    }
+    return
+  }
+
+  if (token) {
+    next()
+  } else {
+    next({ name: 'login' })
+  }
 })
 
 router.afterEach((to, from) => {

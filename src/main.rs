@@ -37,6 +37,14 @@ fn main() -> std::io::Result<()> {
     app(voile_config_dir)
 }
 
+fn configure_frontend(cfg: &mut actix_web::web::ServiceConfig, frontend_dir: &String) {
+    if frontend_dir.is_empty() {
+        routes::default_frontend::configure(cfg);
+    } else {
+        routes::userdefine_frontend::configure(cfg, frontend_dir);
+    }
+}
+
 #[actix_web::main]
 async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
     let sys_conf = config::system_config::SystemConfig::from_dir(voile_config_dir.clone())?;
@@ -50,18 +58,32 @@ async fn app(voile_config_dir: std::path::PathBuf) -> std::io::Result<()> {
 
     log::info!("Listen on: {}", serve_url);
 
-    let server = actix_web::HttpServer::new(move || {
-        let app = actix_web::App::new()
-            .app_data(actix_web::web::Data::new(app_state.clone()))
-            .wrap(actix_web::middleware::Logger::default())
-            .configure(|s| routes::book::configure(s))
-            .configure(|s| routes::config::configure(s));
+    let session_key = actix_web::cookie::Key::generate();
 
-        if sys_conf.frontend_dir.is_empty() {
-            app.configure(routes::default_frontend::configure)
-        } else {
-            app.configure(|s| routes::userdefine_frontend::configure(s, &sys_conf.frontend_dir))
-        }
+    let server = actix_web::HttpServer::new(move || {
+        actix_web::App::new()
+            .app_data(actix_web::web::Data::new(app_state.clone()))
+            .configure(routes::user::configure)
+            .configure(|s| configure_frontend(s, &sys_conf.frontend_dir))
+            .wrap(
+                actix_session::SessionMiddleware::builder(
+                    actix_session::storage::CookieSessionStore::default(),
+                    session_key.clone(),
+                )
+                .cookie_secure(false)
+                .session_lifecycle(
+                    actix_session::config::PersistentSession::default()
+                        .session_ttl(actix_web::cookie::time::Duration::days(1)),
+                )
+                .build(),
+            )
+            .wrap(actix_web::middleware::Logger::default())
+            .service(
+                actix_web::web::scope("/api")
+                    .wrap(routes::user::Authentication)
+                    .configure(routes::book::configure)
+                    .configure(routes::config::configure),
+            )
     })
     .bind((sys_conf.ip, sys_conf.port))?
     .run();
