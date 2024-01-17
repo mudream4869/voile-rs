@@ -20,7 +20,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.3.2",
     "semver": "^6.3.1",
-    "vite": "^4.4.9",
+    "vite": "^4.4.12",
     "vite-plugin-vuetify": "^1.0.2"
   }
 }
