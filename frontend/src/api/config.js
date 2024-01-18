@@ -7,14 +7,29 @@ export async function uploadAvatar(avatar_file) {
     })
 }
 
-export async function updateUserConfig(user_config) {
-    await fetch(`api/config/user`, {
+export async function updateUserName(name) {
+    await fetch(`api/config/user/name`, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(user_config),
+        body: JSON.stringify({
+            name: name,
+        }),
+    })
+}
+
+export async function updateUserTheme(theme) {
+    await fetch(`api/config/user/theme`, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            theme: theme,
+        }),
     })
 }
 

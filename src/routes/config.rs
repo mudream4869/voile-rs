@@ -23,26 +23,30 @@ async fn get_user_config(
     ))
 }
 
-#[post("/config/user")]
-async fn set_user_config(
+#[post("/config/user/name")]
+async fn set_user_name(
     app_state: web::Data<SharedAppState>,
     user_config: web::Json<crate::config::user_config::UserConfig>,
 ) -> actix_web::Result<actix_web::HttpResponse> {
-    if !user_config.name.is_empty() {
-        app_state
-            .lock()
-            .unwrap()
-            .config_handler
-            .set_user_name(&user_config.name)?;
-    }
+    app_state
+        .lock()
+        .unwrap()
+        .config_handler
+        .set_user_name(&user_config.name)?;
 
-    if !user_config.theme.is_empty() {
-        app_state
-            .lock()
-            .unwrap()
-            .config_handler
-            .set_user_theme(&user_config.theme)?;
-    }
+    Ok(actix_web::HttpResponse::Ok().finish())
+}
+
+#[post("/config/user/theme")]
+async fn set_user_theme(
+    app_state: web::Data<SharedAppState>,
+    user_config: web::Json<crate::config::user_config::UserConfig>,
+) -> actix_web::Result<actix_web::HttpResponse> {
+    app_state
+        .lock()
+        .unwrap()
+        .config_handler
+        .set_user_theme(&user_config.theme)?;
 
     Ok(actix_web::HttpResponse::Ok().finish())
 }
@@ -118,6 +122,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .service(get_user_avatar)
         .service(set_user_avatar)
         .service(get_user_config)
-        .service(set_user_config)
+        .service(set_user_name)
+        .service(set_user_theme)
         .service(set_user_password);
 }

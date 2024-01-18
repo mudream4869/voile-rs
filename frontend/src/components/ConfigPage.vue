@@ -65,7 +65,7 @@
 </template>
 
 <script>
-import { uploadAvatar, updateUserConfig, updateUserPassword, getUserConfig, getSystemConfig } from '@/api/config';
+import { uploadAvatar, updateUserName, updateUserTheme, updateUserPassword, getUserConfig, getSystemConfig } from '@/api/config';
 import { useTheme } from 'vuetify'
 import Cookies from 'js-cookie'
 
@@ -114,11 +114,11 @@ export default {
     },
 
     async updateUserName() {
-      await updateUserConfig({ name: this.user_config.name })
+      await updateUserName(this.user_config.name)
     },
 
     async updateUserTheme(value) {
-      await updateUserConfig({ theme: value })
+      await updateUserTheme(value)
       this.theme.global.name.value = value
     },
 
