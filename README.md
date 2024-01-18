@@ -7,6 +7,8 @@ Voile is a app designed for personal book reading that supports various file for
 
 <a href="https://www.flaticon.com/free-icons/bookshelf" title="bookshelf icons">Bookshelf icons created by Freepik - Flaticon</a>
 
+![](screenshot.png)
+
 ## Target
 
 ### Will Provide
@@ -21,7 +23,7 @@ Voile is a app designed for personal book reading that supports various file for
     * [x] Upload/Remove books
     * [x] Edit book information
     * [ ] Group books into a series
-* [ ] Single-user login with password authentication.
+* [x] Single-user login with password authentication.
 * [x] Single binary executable.
 
 ### **May (or may not 😝)** Provide
