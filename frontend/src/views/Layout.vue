@@ -9,6 +9,9 @@
         {{ user_config.name ? user_config.name : '[未填名字]' }}
       </v-app-bar-title>
 
+      <v-text-field density="compact" variant="solo" label="search text" append-inner-icon="mdi-magnify" single-line
+        hide-details @click:append-inner="goSearch()" @keyup.enter="goSearch()" v-model="search_query"></v-text-field>
+
       <v-spacer></v-spacer>
 
       <v-btn icon to="/add_book">
@@ -63,8 +66,17 @@ export default {
     },
     books_types: [],
     drawer: true,
+    search_query: '',
   }),
   methods: {
+    goSearch() {
+      this.$router.push({
+        name: 'books',
+        query: {
+          query: this.search_query,
+        }
+      })
+    },
     async fetchUserConfig() {
       awaitUserConfig().then(async resp => {
         if (resp.status == 200) {

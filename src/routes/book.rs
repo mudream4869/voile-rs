@@ -4,7 +4,12 @@ use futures_util::StreamExt as _;
 use futures_util::TryStreamExt;
 
 use crate::appstate::appstate::SharedAppState;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize)]
+struct GetBooksParams {
+    query: Option<String>,
+}
 
 #[derive(Serialize)]
 struct RespBooks {
@@ -12,8 +17,24 @@ struct RespBooks {
 }
 
 #[get("/books")]
-async fn get_books(app_state: web::Data<SharedAppState>) -> actix_web::Result<impl Responder> {
-    let books = app_state.lock().unwrap().voile.get_books()?;
+async fn get_books(
+    app_state: web::Data<SharedAppState>,
+    params: web::Query<GetBooksParams>,
+) -> actix_web::Result<impl Responder> {
+    let mut books = app_state.lock().unwrap().voile.get_books()?;
+
+    // TODO: design a search engine.
+    if let Some(query) = &params.query {
+        let mut res_books = vec![];
+        for book in books {
+            if book.title.contains(query) {
+                res_books.push(book)
+            }
+        }
+
+        books = res_books;
+    }
+
     Ok(web::Json(RespBooks { books }))
 }
 

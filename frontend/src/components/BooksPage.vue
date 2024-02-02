@@ -34,7 +34,7 @@
 
 <script>
 import { useRoute } from 'vue-router'
-import { getAllBooks } from '@/api/books'
+import { getAllBooks, searchBooks } from '@/api/books'
 import { getBookCoverURL } from '@/api/books'
 
 export default {
@@ -49,6 +49,7 @@ export default {
   created() {
     const route = useRoute()
     this.book_type = route.query.book_type
+    this.query = route.query.query
 
     // fetch on init
     this.fetchData()
@@ -60,7 +61,15 @@ export default {
       },
       deep: true,
       immediate: true,
-    }
+    },
+    '$route.query.query': {
+      handler: function (query) {
+        this.query = query
+        this.fetchData()
+      },
+      deep: true,
+      immediate: true,
+    },
   },
   computed: {
     show_books() {
@@ -85,7 +94,11 @@ export default {
   methods: {
     getBookCoverURL,
     async fetchData() {
-      this.books = await getAllBooks()
+      if (this.query) {
+        this.books = await searchBooks(this.query)
+      } else {
+        this.books = await getAllBooks()
+      }
       this.tags = [...new Set(this.books.map(book => book.tags || []).flat())]
     },
     toggleTag(tag) {
