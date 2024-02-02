@@ -37,6 +37,10 @@ uuid = { version = "1.6.1", features = [
     "fast-rng",          # Use a faster (but still sufficiently random) RNG
     "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
 ] }
+
+# Security update: https://github.com/hyperium/h2/pull/737
+h2 = "0.3.24"
+
 [[bin]]
 name = "app"
 path = "src/main.rs"
