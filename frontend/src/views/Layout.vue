@@ -90,6 +90,15 @@ export default {
       this.books_types = await getAllTypes()
     },
   },
+  watch: {
+    '$route.query.query': {
+      handler: function (query) {
+        this.search_query = query
+      },
+      deep: true,
+      immediate: true,
+    },
+  },
   created() {
     this.fetchUserConfig()
   },
