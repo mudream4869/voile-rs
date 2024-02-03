@@ -159,7 +159,8 @@ impl Voile {
         let sys_conf =
             crate::config::system_config::SystemConfig::from_dir(voile_config_dir.clone())?;
 
-        let db_conn = sqlite::open(":memory:")?;
+        let db_path: PathBuf = [&sys_conf.server_data_dir, "voile.db"].iter().collect();
+        let db_conn = sqlite::open(db_path)?;
 
         let mut ret = Self {
             books_dir: sys_conf.data_dir,
