@@ -35,7 +35,7 @@
         <v-card>
           <v-card-title> 修改 {{ selected_bookids.length }} 本書的類別 </v-card-title>
           <v-card-text>
-            <v-autocomplete label="分類" v-model="change_type.book_type" :items="book_types"></v-autocomplete>
+            <v-combobox label="分類" v-model="change_type.book_type" :items="book_types"></v-combobox>
             <v-btn v-on:click="changeBooksType()" color="blue"> 確認修改 </v-btn>
           </v-card-text>
         </v-card>

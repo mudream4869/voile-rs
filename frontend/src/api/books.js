@@ -24,8 +24,8 @@ export async function getAllLangs() {
 export async function getAllBooks() {
     return (await (await fetch('api/books')).json()).books.map(book => {
         book.tags_set = new Set(book.tags || [])
-        book.created_time = new Date(book.created_timestamp * 1e3).toISOString()
-        book.modified_time = new Date(book.modified_timestamp * 1e3).toISOString()
+        book.created_time = new Date(book.created_timestamp * 1e3).toLocaleString()
+        book.modified_time = new Date(book.modified_timestamp * 1e3).toLocaleString()
         return book
     })
 }
@@ -34,8 +34,8 @@ export async function searchBooks(query) {
     const query_url = 'api/books?' + new URLSearchParams({ query })
     return (await (await fetch(query_url)).json()).books.map(book => {
         book.tags_set = new Set(book.tags || [])
-        book.created_time = new Date(book.created_timestamp * 1e3).toISOString()
-        book.modified_time = new Date(book.modified_timestamp * 1e3).toISOString()
+        book.created_time = new Date(book.created_timestamp * 1e3).toLocaleString()
+        book.modified_time = new Date(book.modified_timestamp * 1e3).toLocaleString()
         return book
     })
 }
