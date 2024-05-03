@@ -2,12 +2,10 @@
   <v-app>
     <v-app-bar>
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
-      <v-avatar image="api/config/user/avatar">
+      <v-avatar image="/logo.png">
       </v-avatar>
 
-      <v-app-bar-title to="/">
-        {{ user_config.name ? user_config.name : '[未填名字]' }}
-      </v-app-bar-title>
+      <v-app-bar-title to="/"> Voile </v-app-bar-title>
 
       <v-text-field density="compact" variant="solo" label="search text" append-inner-icon="mdi-magnify" single-line
         hide-details @click:append-inner="goSearch()" @keyup.enter="goSearch()" v-model="search_query"></v-text-field>
