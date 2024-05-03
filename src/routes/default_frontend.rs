@@ -25,11 +25,19 @@ async fn favicon() -> impl Responder {
     handle_embedded_file("favicon.ico")
 }
 
+#[actix_web::get("/logo.png")]
+async fn logopng() -> impl Responder {
+    handle_embedded_file("logo.png")
+}
+
 #[actix_web::get("/assets/{_:.*}")]
 async fn assets(path: web::Path<String>) -> impl Responder {
     handle_embedded_file(&format!("assets/{}", path))
 }
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
-    cfg.service(index).service(favicon).service(assets);
+    cfg.service(index)
+        .service(favicon)
+        .service(logopng)
+        .service(assets);
 }

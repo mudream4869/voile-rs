@@ -16,6 +16,12 @@ async fn favicon(data: web::Data<UserFrontend>) -> std::io::Result<actix_files::
     Ok(actix_files::NamedFile::open(favicon_path)?)
 }
 
+#[actix_web::get("/logo.png")]
+async fn logopng(data: web::Data<UserFrontend>) -> std::io::Result<actix_files::NamedFile> {
+    let favicon_path = data.frontend_dir.join("logo.png");
+    Ok(actix_files::NamedFile::open(favicon_path)?)
+}
+
 pub fn configure(cfg: &mut web::ServiceConfig, frontend_dir: &str) {
     let user_frontend = UserFrontend {
         frontend_dir: frontend_dir.into(),
@@ -26,5 +32,6 @@ pub fn configure(cfg: &mut web::ServiceConfig, frontend_dir: &str) {
     cfg.app_data(web::Data::new(user_frontend))
         .service(index)
         .service(favicon)
+        .service(logopng)
         .service(actix_files::Files::new("/assets", assets_path).show_files_listing());
 }
